@@ -226,6 +226,46 @@ const PayrollAmendmentsWireframe = () => {
   const resetBulk = () => { setBulkIds([]); setBulkActiveId(null); setBulkStaged([]); setBulkEl(''); setBulkVal(''); setBulkDesc(''); };
   const resetAll  = () => { setStatus('Under Review'); setAmendments([]); setAmendHistory([]); setRerunDone(false); resetSrc(); resetBulk(); };
 
+  // ── Dynamic figure helpers ─────────────────────────────────────────────
+  const parseAmt = (s) => parseFloat(String(s).replace(/[£,]/g, '')) || 0;
+  const fmtAmt   = (n) => '£' + n.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  const BASE_GROSS   = 13800.00;
+  const BASE_NET     = 10544.55;
+  const BASE_PENSION =  1240.00;
+  const BASE_HMRC    =  1800.45;
+  const NET_RATIO     = BASE_NET     / BASE_GROSS;
+  const PENSION_RATIO = BASE_PENSION / BASE_GROSS;
+  const HMRC_RATIO    = BASE_HMRC    / BASE_GROSS;
+
+  // Pending amendments total (not yet recalculated)
+  const pendingTotal  = amendments.reduce((s, a) => s + parseAmt(a.value), 0);
+  // Applied amendments total (post recalculate)
+  const appliedTotal  = amendHistory.reduce((s, a) => s + parseAmt(a.value), 0);
+
+  // What figures to show on the cards
+  const displayGross   = rerunDone ? BASE_GROSS + appliedTotal : BASE_GROSS;
+  const displayNet     = rerunDone ? displayGross * NET_RATIO     : BASE_NET;
+  const displayPension = rerunDone ? displayGross * PENSION_RATIO : BASE_PENSION;
+  const displayHMRC    = rerunDone ? displayGross * HMRC_RATIO    : BASE_HMRC;
+
+  const dynCards = [
+    { label: 'Net Pay',               val: displayNet,     base: BASE_NET,     diff: displayNet     - BASE_NET     },
+    { label: 'Gross Pay',             val: displayGross,   base: BASE_GROSS,   diff: displayGross   - BASE_GROSS   },
+    { label: 'Pension contributions', val: displayPension, base: BASE_PENSION, diff: displayPension - BASE_PENSION },
+    { label: 'HMRC payments',         val: displayHMRC,    base: BASE_HMRC,    diff: displayHMRC    - BASE_HMRC    },
+  ];
+
+  // Per-employee amended gross
+  const empDisplayGross = (emp) => {
+    const base = parseAmt(emp.gross);
+    const pending = amendments.filter(a => a.empId === emp.id).reduce((s,a) => s + parseAmt(a.value), 0);
+    const applied = amendHistory.filter(a => a.empId === emp.id).reduce((s,a) => s + parseAmt(a.value), 0);
+    if (rerunDone) return fmtAmt(base + applied);
+    if (pending > 0) return fmtAmt(base + pending);
+    return emp.gross;
+  };
+
   const addSrcStaged = () => {
     if (!srcEmp || !srcEl || !srcVal) return;
     const e = EMPLOYEES.find(x => x.id === srcEmp);
@@ -432,7 +472,7 @@ const PayrollAmendmentsWireframe = () => {
     <div style={{ minHeight: '100vh', background: S4.pageBg, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
 
       {/* FIX 9: Sticky journey tracker at top */}
-      <JourneyBar />
+      {JourneyBar()}
 
       <div style={{ padding: '22px 28px', maxWidth: 1100, margin: '0 auto' }}>
 
@@ -529,20 +569,31 @@ const PayrollAmendmentsWireframe = () => {
           </div>
         )}
 
-        {/* Summary cards */}
+        {/* Summary cards — dynamic */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 20 }}>
-          {CARDS.map((c, i) => (
+          {dynCards.map((c, i) => (
             <div key={i} style={{ background: rerunDone ? '#f0fdf4' : S4.cardBg, border: `1px solid ${rerunDone ? '#6ee7b7' : S4.border}`, borderRadius: 10, padding: '14px 18px', transition: 'background 0.3s' }}>
               <div style={{ fontSize: 12, color: S4.subtext, marginBottom: 5 }}>{c.label}</div>
-              <div style={{ fontSize: 26, fontWeight: 700, color: S4.text }}>{rerunDone ? c.after : c.before}</div>
-              {rerunDone && (
+              <div style={{ fontSize: 26, fontWeight: 700, color: S4.text }}>{fmtAmt(c.val)}</div>
+              {rerunDone && c.diff !== 0 && (
                 <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: S4.green }}>{c.diff}</span>
-                  <span style={{ fontSize: 11, color: S4.subtext }}>was {c.before}</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: c.diff > 0 ? S4.green : S4.red }}>{c.diff > 0 ? '+' : ''}{fmtAmt(c.diff)}</span>
+                  <span style={{ fontSize: 11, color: S4.subtext }}>was {fmtAmt(c.base)}</span>
+                </div>
+              )}
+              {!rerunDone && pendingTotal > 0 && (
+                <div style={{ marginTop: 6, fontSize: 11, color: '#92400e', fontStyle: 'italic' }}>
+                  pending +{fmtAmt(i === 0 ? pendingTotal * NET_RATIO : i === 1 ? pendingTotal : i === 2 ? pendingTotal * PENSION_RATIO : pendingTotal * HMRC_RATIO)}
                 </div>
               )}
             </div>
           ))}
+        </div>
+
+        {/* Wireframe disclaimer */}
+        <div style={{ fontSize: 11, color: '#94a3b8', fontStyle: 'italic', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: 4, padding: '1px 6px', fontStyle: 'normal', fontWeight: 600, fontSize: 10, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 0.4 }}>Wireframe</span>
+          Gross reflects actual amendment values. Net Pay, Pension and HMRC are illustrative estimates — real figures depend on the payroll calculation engine.
         </div>
 
         {/* Pay period label */}
@@ -589,7 +640,7 @@ const PayrollAmendmentsWireframe = () => {
                   <div style={{ fontSize: 13, color: S4.text }}>{emp.w1m1}</div>
                   <div style={{ fontSize: 13, color: S4.text }}>{emp.hours}</div>
                   <div style={{ fontSize: 13, color: S4.text, textAlign: 'right' }}>{emp.sl}</div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: S4.text, textAlign: 'right' }}>{emp.gross}</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: S4.text, textAlign: 'right' }}>{empDisplayGross(emp)}</div>
                   <div style={{ fontSize: 12 }}>
                     {rerunDone && histAmends.length > 0 ? (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -1055,16 +1106,16 @@ const PayrollAmendmentsWireframe = () => {
   // ══════════════════════════════════════════════════════════════════════════
   return (
     <div>
-      <PayrollScreen />
-      {showAmendConfirm   && <AmendConfirmModal />}
-      {showApproveConfirm && <ApproveConfirmModal />}
-      {showAmendHistory   && <AmendHistoryModal />}
-      {showTypeModal      && <TypeModal />}
-      {showSourcePopup    && <SourcePopup />}
-      {showBulkPopup      && <BulkPopup />}
-      {showRotaConfirm    && <RotaConfirm />}
-      {showRowModal       && <RowModal />}
-      {showProfile        && <ProfileModal />}
+      {PayrollScreen()}
+      {showAmendConfirm   && AmendConfirmModal()}
+      {showApproveConfirm && ApproveConfirmModal()}
+      {showAmendHistory   && AmendHistoryModal()}
+      {showTypeModal      && TypeModal()}
+      {showSourcePopup    && SourcePopup()}
+      {showBulkPopup      && BulkPopup()}
+      {showRotaConfirm    && RotaConfirm()}
+      {showRowModal       && RowModal()}
+      {showProfile        && ProfileModal()}
     </div>
   );
 };
