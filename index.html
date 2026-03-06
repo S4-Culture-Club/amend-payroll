@@ -204,6 +204,15 @@ const PayrollAmendmentsWireframe = () => {
   const [dedEnd,   setDedEnd]   = useState('');
   const [dedToast, setDedToast] = useState(false);
 
+  // Director flag state (per-employee, keyed by emp.id)
+  const [directorMap,      setDirectorMap]      = useState({}); // { empId: { isDirector, appointmentDate, niMethod, saved } }
+  const [showDirConfirm,   setShowDirConfirm]   = useState(false);
+  const [dirSaveSuccess,   setDirSaveSuccess]   = useState(false);
+  const [dirValidation,    setDirValidation]    = useState(false);
+
+  const getDir = (empId) => directorMap[empId] || { isDirector: false, appointmentDate: '', niMethod: 'annual', saved: false };
+  const setDir = (empId, patch) => setDirectorMap(prev => ({ ...prev, [empId]: { ...getDir(empId), ...patch } }));
+
   // Reactive: if all amendments removed while recalculate required, revert to Amend Payroll
   useEffect(() => {
     if (status === 'Recalculate Required' && amendments.length === 0) {
@@ -951,6 +960,34 @@ const PayrollAmendmentsWireframe = () => {
   const ProfileModal = () => {
     if (!profileEmp) return null;
     const emp = profileEmp;
+    const dir = getDir(emp.id);
+
+    const handleDirCheckbox = () => {
+      if (dir.isDirector && dir.saved) {
+        setShowDirConfirm(true);
+      } else {
+        setDir(emp.id, { isDirector: !dir.isDirector, appointmentDate: '', niMethod: 'annual', saved: false });
+        setDirValidation(false);
+        setDirSaveSuccess(false);
+      }
+    };
+
+    const handleDirSave = () => {
+      if (dir.isDirector && !dir.appointmentDate) {
+        setDirValidation(true);
+        return;
+      }
+      setDirValidation(false);
+      setDir(emp.id, { saved: dir.isDirector });
+      setDirSaveSuccess(true);
+      setTimeout(() => setDirSaveSuccess(false), 3000);
+    };
+
+    const confirmDirRemove = () => {
+      setDir(emp.id, { isDirector: false, appointmentDate: '', niMethod: 'annual', saved: false });
+      setShowDirConfirm(false);
+    };
+
     return (
       <div style={{ position: 'fixed', inset: 0, background: 'rgba(13,61,79,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 300, padding: 16, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
         <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 24px 64px rgba(0,0,0,0.28)', width: '100%', maxWidth: 900, maxHeight: '92vh', display: 'flex', flexDirection: 'column', position: 'relative' }}>
@@ -968,7 +1005,10 @@ const PayrollAmendmentsWireframe = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
               <div style={{ width: 52, height: 52, borderRadius: '50%', background: emp.color, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 18, flexShrink: 0 }}>{emp.initials}</div>
               <div>
-                <div style={{ color: '#fff', fontWeight: 700, fontSize: 18 }}>{emp.name}</div>
+                <div style={{ color: '#fff', fontWeight: 700, fontSize: 18, display: 'flex', alignItems: 'center', gap: 10 }}>
+                  {emp.name}
+                  {dir.saved && <span style={{ background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', borderRadius: 999, padding: '2px 10px', fontSize: 11, fontWeight: 700 }}>Company Director</span>}
+                </div>
                 <div style={{ color: '#94c5cf', fontSize: 12, marginTop: 2 }}>Known as: {emp.name.split(' ')[0]}</div>
               </div>
               <div style={{ marginLeft: 20 }}><div style={{ color: '#94c5cf', fontSize: 11 }}>Job role:</div><div style={{ color: '#fff', fontWeight: 600, fontSize: 13 }}>Senior Associate</div></div>
@@ -996,17 +1036,92 @@ const PayrollAmendmentsWireframe = () => {
               <InfoBanner color="blue" text={`Changes made here will take effect in the next payroll run (period: 23/03/2025 – 30/03/2025) unless amend mode is active.`} />
             )}
 
+            {/* Director save success toast */}
+            {dirSaveSuccess && (
+              <div style={{ background: S4.greenLight, border: '1px solid #6ee7b7', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: '#065f46', display: 'flex', gap: 8, alignItems: 'center' }}>
+                <span>✓</span>
+                <span><strong>Saved.</strong> {emp.name} has been flagged as a company director. NI will be calculated using the {dir.niMethod === 'annual' ? 'annual earnings period' : 'alternative periodic'} method from the next payrun.</span>
+              </div>
+            )}
+
             {/* Pay Info + YTD */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-              <div style={{ background: '#fff', border: `1px solid ${S4.border}`, borderRadius: 10, overflow: 'hidden' }}>
-                <div style={{ padding: '10px 16px', borderBottom: `1px solid ${S4.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontWeight: 700, fontSize: 13, color: S4.text }}>Pay Information</span>
+              <div style={{ background: '#fff', border: `1px solid ${dir.saved ? '#6ee7b7' : S4.border}`, borderRadius: 10, overflow: 'hidden', transition: 'border-color 0.2s' }}>
+                <div style={{ padding: '10px 16px', borderBottom: `1px solid ${S4.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: dir.saved ? '#f0fdf4' : '#fff' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ fontWeight: 700, fontSize: 13, color: S4.text }}>Pay Information</span>
+                    {dir.saved && <span style={{ background: S4.darkTeal, color: '#fff', borderRadius: 999, padding: '1px 8px', fontSize: 10, fontWeight: 700 }}>Company Director</span>}
+                  </div>
                   <button style={{ background: 'none', border: 'none', color: S4.subtext, cursor: 'pointer', fontSize: 14 }}>✏</button>
                 </div>
-                <div style={{ padding: '14px 16px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px 8px' }}>
+                <div style={{ padding: '14px 16px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px 8px', borderBottom: `1px solid ${S4.border}` }}>
                   {[['1257L','Tax Code'],['No','W1M1'],['No','Student Loan'],['M','NI Category'],['12345678901','HMRC submission ID'],['No','Post Graduate Loan']].map(([val,lbl],i) => (
                     <div key={i}><div style={{ fontWeight: 600, fontSize: 14, color: S4.text }}>{val}</div><div style={{ fontSize: 11, color: S4.subtext, marginTop: 2 }}>{lbl}</div></div>
                   ))}
+                </div>
+
+                {/* ── Director Settings section ── */}
+                <div style={{ padding: '16px 16px', background: dir.isDirector ? '#f8fffe' : '#fff' }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: S4.subtext, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>Director Settings</div>
+
+                  {/* Checkbox */}
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: dir.isDirector ? 16 : 0 }}>
+                    <div onClick={handleDirCheckbox} style={{ width: 18, height: 18, borderRadius: 4, marginTop: 1, flexShrink: 0, border: `2px solid ${dir.isDirector ? S4.midTeal : '#cbd5e1'}`, background: dir.isDirector ? S4.midTeal : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                      {dir.isDirector && <span style={{ color: '#fff', fontSize: 11, fontWeight: 700, lineHeight: 1 }}>✓</span>}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: S4.text, cursor: 'pointer' }} onClick={handleDirCheckbox}>Company Director</div>
+                      <div style={{ fontSize: 12, color: S4.subtext, marginTop: 3 }}>Directors have NI calculated on an annual earnings period basis unless the alternative method is elected. See CWG2 Chapter 3.</div>
+                    </div>
+                  </div>
+
+                  {/* Dependent fields */}
+                  {dir.isDirector && (
+                    <div style={{ marginLeft: 30, display: 'flex', flexDirection: 'column', gap: 14 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                        <div>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: S4.subtext, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.4 }}>Appointment Date *</div>
+                          <input value={dir.appointmentDate} onChange={e => { setDir(emp.id, { appointmentDate: e.target.value }); setDirValidation(false); }} placeholder="DD/MM/YYYY"
+                            style={{ width: '100%', border: `1px solid ${dirValidation && !dir.appointmentDate ? S4.red : S4.border}`, borderRadius: 8, padding: '8px 10px', fontSize: 13, background: '#fff', color: S4.text, outline: 'none', boxSizing: 'border-box' }} />
+                          {dirValidation && !dir.appointmentDate && (
+                            <div style={{ fontSize: 11, color: S4.red, marginTop: 4, display: 'flex', gap: 4 }}><span>⚠</span> Appointment Date is required when Company Director is ticked</div>
+                          )}
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: S4.subtext, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.4 }}>NI Method *</div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 2 }}>
+                            {[
+                              { value: 'annual',      label: 'Annual earnings period',       desc: 'Default — HMRC standard for directors', badge: 'Default' },
+                              { value: 'alternative', label: 'Alternative method (periodic)', desc: 'Periodic calculation with year-end reconciliation' },
+                            ].map(opt => (
+                              <label key={opt.value} onClick={() => setDir(emp.id, { niMethod: opt.value })} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '8px 10px', border: `1.5px solid ${dir.niMethod === opt.value ? S4.midTeal : S4.border}`, borderRadius: 8, cursor: 'pointer', background: dir.niMethod === opt.value ? S4.lightTeal : '#fff' }}>
+                                <div style={{ width: 15, height: 15, borderRadius: '50%', marginTop: 2, flexShrink: 0, border: `2px solid ${dir.niMethod === opt.value ? S4.midTeal : '#cbd5e1'}`, background: dir.niMethod === opt.value ? S4.midTeal : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                  {dir.niMethod === opt.value && <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#fff' }} />}
+                                </div>
+                                <div>
+                                  <div style={{ fontSize: 12, fontWeight: 600, color: S4.text, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                    {opt.label}
+                                    {opt.badge && <span style={{ background: S4.lightTeal, color: S4.midTeal, borderRadius: 999, padding: '1px 6px', fontSize: 9, fontWeight: 700 }}>{opt.badge}</span>}
+                                  </div>
+                                  <div style={{ fontSize: 11, color: S4.subtext, marginTop: 1 }}>{opt.desc}</div>
+                                </div>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      {dir.niMethod === 'alternative' && (
+                        <div style={{ background: S4.amberLight, border: `1px solid ${S4.amberBorder}`, borderRadius: 8, padding: '10px 12px', fontSize: 12, color: '#92400e', display: 'flex', gap: 8 }}>
+                          <span style={{ flexShrink: 0 }}>⚠</span>
+                          <span>The alternative method calculates NI on each pay period using standard thresholds. A reconciliation will be performed in the final period of the tax year to correct any difference against the annual earnings period liability.</span>
+                        </div>
+                      )}
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+                        <button onClick={() => { setDir(emp.id, { isDirector: false, appointmentDate: '', niMethod: 'annual', saved: false }); setDirValidation(false); }} style={{ background: 'transparent', color: S4.darkTeal, border: `1.5px solid ${S4.darkTeal}`, borderRadius: 8, padding: '5px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Discard</button>
+                        <button onClick={handleDirSave} style={{ background: S4.darkTeal, color: '#fff', border: `1.5px solid ${S4.darkTeal}`, borderRadius: 8, padding: '5px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Save director settings</button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
               <div style={{ background: '#fff', border: `1px solid ${S4.border}`, borderRadius: 10, overflow: 'hidden' }}>
@@ -1097,6 +1212,29 @@ const PayrollAmendmentsWireframe = () => {
             <TealBtn outline sm onClick={() => { setShowProfile(false); setShowAddForm(false); }}>Close</TealBtn>
           </div>
         </div>
+
+        {/* Director remove confirmation modal */}
+        {showDirConfirm && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(13,61,79,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 400, padding: 16 }}>
+            <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 24px 64px rgba(0,0,0,0.22)', width: '100%', maxWidth: 460 }}>
+              <div style={{ background: S4.cardBg, borderBottom: `1px solid ${S4.border}`, borderRadius: '12px 12px 0 0', padding: '14px 20px' }}>
+                <div style={{ fontWeight: 700, color: S4.text, fontSize: 15 }}>Remove director flag?</div>
+                <div style={{ fontSize: 12, color: S4.subtext, marginTop: 3 }}>Please read before confirming</div>
+              </div>
+              <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div style={{ background: S4.amberLight, border: `1px solid ${S4.amberBorder}`, borderRadius: 8, padding: '10px 14px', fontSize: 13, color: '#92400e', display: 'flex', gap: 8 }}>
+                  <span style={{ flexShrink: 0 }}>⚠</span>
+                  <span>Removing the director flag will revert NI calculations to standard periodic rules from the next payrun. This cannot be undone automatically — any periods already calculated under director rules may need manual review.</span>
+                </div>
+                <div style={{ fontSize: 13, color: S4.text }}><strong>{emp.name}</strong> will no longer be treated as a company director. Their appointment date and NI method will be cleared.</div>
+              </div>
+              <div style={{ borderTop: `1px solid ${S4.border}`, background: S4.cardBg, borderRadius: '0 0 12px 12px', padding: '12px 20px', display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+                <TealBtn outline onClick={() => setShowDirConfirm(false)}>Cancel — keep director flag</TealBtn>
+                <TealBtn danger onClick={confirmDirRemove}>Yes, remove director flag</TealBtn>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   };
