@@ -1,1130 +1,1311 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>S4Pay — Payroll Amendments Wireframe</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #f4f7f9; }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>S4Pay — Unlocked Rota & Pay Run Comparison</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #f4f7f9; color: #1a2e35; font-size: 14px; }
+
+  /* ── Layout ── */
+  .topbar { background: #0d3d4f; height: 48px; display: flex; align-items: center; padding: 0 24px; gap: 16px; }
+  .topbar-logo { color: #fff; font-weight: 800; font-size: 16px; letter-spacing: -0.5px; }
+  .topbar-sep { width: 1px; height: 20px; background: rgba(255,255,255,0.2); }
+  .topbar-crumb { color: #94c5cf; font-size: 12px; }
+  .topbar-crumb span { color: #fff; font-weight: 600; }
+
+  .page { padding: 24px 28px; max-width: 1100px; margin: 0 auto; }
+
+  /* ── Org header ── */
+  .org-header { background: #fff; border: 1px solid #d0e2e8; border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
+  .org-header-top { background: #0d3d4f; padding: 16px 22px; display: flex; align-items: center; justify-content: space-between; }
+  .org-avatar { width: 48px; height: 48px; border-radius: 50%; background: #0891b2; color: #fff; font-weight: 800; font-size: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .org-name { color: #fff; font-weight: 700; font-size: 18px; }
+  .org-meta { color: #94c5cf; font-size: 12px; margin-top: 2px; }
+  .org-header-bar { padding: 10px 22px; background: #eef4f7; border-top: 1px solid #d0e2e8; display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+  .paye-kv { font-size: 11px; color: #6b8a94; }
+  .paye-kv strong { color: #1a2e35; font-family: monospace; }
+
+  /* ── Pills ── */
+  .pill { border-radius: 999px; padding: 2px 10px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
+  .pill-green  { background: #d1fae5; color: #059669; border: 1px solid #6ee7b7; }
+  .pill-amber  { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+  .pill-teal   { background: #e6f4f6; color: #1d8a9a; border: 1px solid #a8d8df; }
+  .pill-red    { background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; }
+  .pill-navy   { background: rgba(255,255,255,0.15); color: #fff; border: none; }
+
+  /* ── Buttons ── */
+  .btn { border-radius: 6px; padding: 7px 14px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 6px; transition: opacity 0.15s; }
+  .btn:hover { opacity: 0.88; }
+  .btn-primary { background: #0d3d4f; color: #fff; }
+  .btn-outline { background: transparent; color: #0d3d4f; border: 1.5px solid #0d3d4f; }
+  .btn-ghost   { background: transparent; color: #6b8a94; border: 1.5px solid #d0e2e8; }
+  .btn-teal    { background: #1d8a9a; color: #fff; }
+  .btn-danger  { background: #dc2626; color: #fff; }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+  .btn-full { width: 100%; justify-content: center; }
+  .btn-icon { background: rgba(255,255,255,0.15); border: none; color: #fff; border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 600; cursor: pointer; }
+
+  /* ── Frequency card ── */
+  .freq-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  .freq-card { background: #fff; border: 1px solid #d0e2e8; border-radius: 12px; overflow: hidden; }
+  .freq-card-header { background: #0d3d4f; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; }
+  .freq-card-title { color: #fff; font-weight: 700; font-size: 14px; }
+  .freq-card-sub   { color: #94c5cf; font-size: 11px; margin-top: 2px; }
+  .freq-card-body  { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat-box { border-radius: 8px; padding: 10px 14px; }
+  .stat-box-green  { background: #f0fdf4; border: 1px solid #6ee7b7; }
+  .stat-box-amber  { background: #fef3c7; border: 1px solid #fcd34d; }
+  .stat-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-label-green { color: #059669; }
+  .stat-label-amber { color: #92400e; }
+  .stat-value { font-size: 17px; font-weight: 800; color: #1a2e35; margin-top: 3px; }
+  .pay-method-row { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: #eef4f7; border-radius: 8px; }
+  .rota-status-row { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; }
+  .rota-unlocked { background: #fef3c7; border: 1px solid #fcd34d; color: #92400e; }
+  .rota-locked   { background: #d1fae5; border: 1px solid #6ee7b7; color: #059669; }
+  .pay-types { display: flex; flex-wrap: wrap; gap: 6px; }
+  .freq-card-footer { display: flex; gap: 8px; padding-top: 4px; border-top: 1px solid #d0e2e8; }
+
+  /* ── Section heading ── */
+  .section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .section-title { font-size: 16px; font-weight: 700; color: #1a2e35; }
+  .section-sub   { font-size: 12px; color: #6b8a94; margin-top: 3px; }
+
+  /* ── Journey progress bar ── */
+  .journey-bar { background: #fff; border-bottom: 1px solid #d0e2e8; padding: 10px 28px; display: flex; align-items: center; gap: 0; justify-content: space-between; flex-wrap: wrap; }
+  .journey-step { display: flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+  .step-done   { background: #d1fae5; color: #059669; }
+  .step-active { background: #0d3d4f; color: #fff; }
+  .step-idle   { background: #f1f5f9; color: #94a3b8; }
+  .step-arrow  { color: #d0e2e8; font-size: 14px; }
+
+  /* ── Overlay & modals ── */
+  .overlay { position: fixed; inset: 0; background: rgba(13,61,79,0.55); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 16px; }
+  .modal { background: #fff; border-radius: 12px; box-shadow: 0 24px 64px rgba(0,0,0,0.22); width: 100%; overflow: hidden; }
+  .modal-sm  { max-width: 480px; }
+  .modal-md  { max-width: 620px; }
+  .modal-lg  { max-width: 860px; }
+  .modal-header { background: #eef4f7; border-bottom: 1px solid #d0e2e8; padding: 14px 20px; display: flex; align-items: flex-start; justify-content: space-between; }
+  .modal-badge { border-radius: 6px; padding: 2px 8px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; display: inline-block; }
+  .modal-badge-amber { background: #fef3c7; color: #92400e; }
+  .modal-badge-teal  { background: #e6f4f6; color: #1d8a9a; }
+  .modal-badge-blue  { background: #dbeafe; color: #1d4ed8; }
+  .modal-title { font-weight: 700; color: #1a2e35; font-size: 15px; }
+  .modal-sub   { font-size: 12px; color: #6b8a94; margin-top: 3px; }
+  .modal-close { background: none; border: none; font-size: 20px; color: #94a3b8; cursor: pointer; line-height: 1; margin-left: 12px; flex-shrink: 0; }
+  .modal-body  { padding: 20px; display: flex; flex-direction: column; gap: 14px; max-height: 70vh; overflow-y: auto; }
+  .modal-footer { background: #eef4f7; border-top: 1px solid #d0e2e8; padding: 12px 20px; display: flex; justify-content: flex-end; gap: 10px; }
+
+  /* ── Banners ── */
+  .banner { border-radius: 8px; padding: 10px 14px; font-size: 12px; display: flex; gap: 8px; align-items: flex-start; }
+  .banner-amber { background: #fef3c7; border: 1px solid #fcd34d; color: #92400e; }
+  .banner-blue  { background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; }
+  .banner-green { background: #d1fae5; border: 1px solid #6ee7b7; color: #065f46; }
+  .banner-red   { background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; }
+
+  /* ── Warning checklist ── */
+  .warning-box { background: #fff7ed; border: 1.5px solid #fed7aa; border-radius: 10px; padding: 16px; }
+  .warning-title { font-weight: 700; color: #92400e; font-size: 14px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .warning-list { display: flex; flex-direction: column; gap: 8px; }
+  .warning-item { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; color: #78350f; }
+  .warning-dot  { width: 6px; height: 6px; border-radius: 50%; background: #f59e0b; flex-shrink: 0; margin-top: 5px; }
+
+  /* ── Acknowledge checkbox ── */
+  .ack-box { border: 1.5px solid #fcd34d; border-radius: 8px; padding: 12px 14px; background: #fffbeb; display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
+  .ack-box.checked { border-color: #6ee7b7; background: #f0fdf4; }
+  .ack-check { width: 18px; height: 18px; border-radius: 4px; border: 2px solid #fcd34d; background: #fff; flex-shrink: 0; display: flex; align-items: center; justify-content: center; margin-top: 1px; }
+  .ack-box.checked .ack-check { background: #059669; border-color: #059669; color: #fff; font-size: 11px; font-weight: 700; }
+  .ack-label { font-size: 13px; font-weight: 600; color: #92400e; }
+  .ack-box.checked .ack-label { color: #065f46; }
+
+  /* ── Audit log ── */
+  .audit-row { display: flex; gap: 10px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
+  .audit-icon { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
+  .audit-icon-amber { background: #fef3c7; }
+  .audit-icon-green { background: #d1fae5; }
+  .audit-icon-teal  { background: #e6f4f6; }
+  .audit-meta { font-size: 11px; color: #6b8a94; margin-top: 2px; }
+  .audit-badge { background: #fef3c7; color: #92400e; border-radius: 999px; padding: 1px 8px; font-size: 10px; font-weight: 700; margin-left: 6px; }
+
+  /* ── Processing spinner ── */
+  .spinner-wrap { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 30px 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner { width: 48px; height: 48px; border: 4px solid #e6f4f6; border-top-color: #1d8a9a; border-radius: 50%; animation: spin 0.8s linear infinite; }
+  .spinner-steps { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+  .s-step { display: flex; gap: 8px; align-items: center; font-size: 12px; padding: 6px 10px; border-radius: 6px; }
+  .s-step-done   { color: #059669; background: #f0fdf4; }
+  .s-step-active { color: #0d3d4f; background: #e6f4f6; font-weight: 600; }
+  .s-step-idle   { color: #94a3b8; }
+
+  /* ── Comparison table ── */
+  .diff-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .diff-table th { background: #eef4f7; color: #6b8a94; font-weight: 700; text-align: left; padding: 8px 10px; border-bottom: 2px solid #d0e2e8; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; }
+  .diff-table td { padding: 9px 10px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+  .diff-table tr:last-child td { border-bottom: none; }
+  .diff-table tr.selected td { background: #f0fdf4; }
+  .diff-table tr:hover td { background: #f8fafc; cursor: pointer; }
+  .diff-table tr.selected:hover td { background: #d1fae5; }
+  .diff-check { width: 16px; height: 16px; border-radius: 4px; border: 2px solid #d0e2e8; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; }
+  .diff-check.on { background: #059669; border-color: #059669; color: #fff; }
+  .delta-pos { color: #059669; font-weight: 700; }
+  .delta-neg { color: #dc2626; font-weight: 700; }
+  .emp-cell   { display: flex; align-items: center; gap: 8px; }
+  .emp-av     { width: 26px; height: 26px; border-radius: 50%; color: #fff; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+  /* ── Complete state ── */
+  .complete-card { background: #fff; border: 2px solid #6ee7b7; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+  .complete-icon { width: 48px; height: 48px; border-radius: 50%; background: #d1fae5; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+
+  /* ── Select all bar ── */
+  .select-bar { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; background: #f8fafc; border-radius: 8px; border: 1px solid #d0e2e8; margin-bottom: 2px; }
+
+  /* ── Annotation strip ── */
+  .annotation { background: #fff; border-radius: 10px; padding: 14px 18px; border: 1px solid #d0e2e8; margin-top: 20px; }
+  .annotation-title { font-size: 11px; font-weight: 700; color: #6b8a94; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+  .annotation-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px; }
+  .annotation-item { font-size: 12px; display: flex; gap: 8px; }
+  .annotation-dot  { color: #1d8a9a; font-weight: 700; flex-shrink: 0; }
+
+  /* ── Step indicator ── */
+  .step-indicator { display: flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #d0e2e8; border-radius: 8px; padding: 8px 14px; font-size: 12px; color: #6b8a94; margin-bottom: 16px; }
+  .step-num { background: #0d3d4f; color: #fff; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+
+  /* ── Approve / Reject per-row buttons ── */
+  .decision-btn { border: 1.5px solid #d0e2e8; border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 700; cursor: pointer; background: #fff; transition: all 0.12s; }
+  .approve-btn { color: #6b8a94; }
+  .approve-btn:hover { border-color: #059669; color: #059669; }
+  .active-approve { background: #d1fae5; border-color: #059669; color: #059669; }
+  .reject-btn { color: #6b8a94; }
+  .reject-btn:hover { border-color: #dc2626; color: #dc2626; }
+  .active-reject { background: #fee2e2; border-color: #dc2626; color: #dc2626; }
+
+  /* hide inactive screens */
+  .screen { display: none; }
+  .screen.active { display: block; }
+</style>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="text/babel">
-const { useState, useEffect } = React;
 
-// ─── S4labour design tokens ───────────────────────────────────────────────────
-const S4 = {
-  darkTeal:   '#0d3d4f',
-  midTeal:    '#1a6b7a',
-  lightTeal:  '#e6f4f6',
-  cardBg:     '#eef4f7',
-  pageBg:     '#f4f7f9',
-  text:       '#1a2e35',
-  subtext:    '#6b8a94',
-  border:     '#d0e2e8',
-  amber:      '#f59e0b',
-  amberLight: '#fef3c7',
-  amberBorder:'#fcd34d',
-  green:      '#059669',
-  greenLight: '#d1fae5',
-  red:        '#dc2626',
-  redLight:   '#fee2e2',
-};
+<!-- ══ TOP BAR ══ -->
+<div class="topbar">
+  <div class="topbar-logo">S4Pay</div>
+  <div class="topbar-sep"></div>
+  <div class="topbar-crumb">Bureau Dashboard → Active Clients → <span>The Anchor Group</span></div>
+</div>
 
-const EMPLOYEES = [
-  { id: '001', name: 'John Smith',     initials: 'JS', color: '#6366f1', area: 'Head office', taxCode: '1257L', w1m1: 'N', sl: 'N', hours: '173.25', gross: '£2,450.00' },
-  { id: '002', name: 'Sarah Williams', initials: 'SW', color: '#ec4899', area: 'Head office', taxCode: '1257L', w1m1: 'N', sl: 'N', hours: '281.50', gross: '£3,100.00' },
-  { id: '003', name: 'Michael Brown',  initials: 'MB', color: '#0891b2', area: 'FOH',         taxCode: '1257L', w1m1: 'N', sl: 'N', hours: '158.60', gross: '£2,800.00' },
-  { id: '004', name: 'Emma Davis',     initials: 'ED', color: '#16a34a', area: 'BOH',         taxCode: '1257L', w1m1: 'N', sl: 'N', hours: '146.00', gross: '£1,950.00' },
-  { id: '005', name: 'James Wilson',   initials: 'JW', color: '#d97706', area: 'BOH',         taxCode: '1257L', w1m1: 'N', sl: 'N', hours: '213.30', gross: '£3,500.00' },
-];
-
-const PAY_ELEMENTS = [
-  'Basic Salary','Bonus','Commission','Car Allowance','London Weighting',
-  'Shift Allowance','On-Call Allowance','Statutory Sick Pay',
-  'Statutory Maternity Pay','Pension Adjustment','Tax Code Correction','NI Adjustment',
-];
-
-const CARDS = [
-  { label: 'Net Pay',               before: '£10,544.55', after: '£14,545.55', diff: '+£4,001.00' },
-  { label: 'Gross Pay',             before: '£13,800.00', after: '£14,170.00', diff: '+£370.00'   },
-  { label: 'Pension contributions', before: '£1,240.00',  after: '£1,273.30',  diff: '+£33.30'    },
-  { label: 'HMRC payments',         before: '£1,800.45',  after: '£1,847.20',  diff: '+£46.75'    },
-];
-
-// ─── Shared UI primitives ─────────────────────────────────────────────────────
-const Avatar = ({ emp, size = 32 }) => (
-  <div style={{ width: size, height: size, borderRadius: '50%', background: emp.color, color: '#fff', fontSize: size * 0.36, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-    {emp.initials}
+<!-- ══ JOURNEY BAR ══ -->
+<div class="journey-bar" id="journeyBar">
+  <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
+    <div class="journey-step step-active" id="js1">1 · Dashboard</div>
+    <div class="step-arrow">›</div>
+    <div class="journey-step step-idle" id="js2">2 · Rota Warning</div>
+    <div class="step-arrow">›</div>
+    <div class="journey-step step-idle" id="js3">3 · Processing</div>
+    <div class="step-arrow">›</div>
+    <div class="journey-step step-idle" id="js4">4 · Jan Complete</div>
+    <div class="step-arrow">›</div>
+    <div class="journey-step step-idle" id="js5">5 · Comparison</div>
+    <div class="step-arrow">›</div>
+    <div class="journey-step step-idle" id="js6">6 · Feb Summary</div>
+    <div class="step-arrow">›</div>
+    <div class="journey-step step-idle" id="js7">7 · Payslip</div>
   </div>
-);
+  <div style="font-size:11px;color:#6b8a94;">Story 1 covers steps 1–4 &nbsp;·&nbsp; Story 2 covers steps 4–7</div>
+</div>
 
-const TealBtn = ({ children, onClick, disabled, outline, sm, danger }) => {
-  const bg    = disabled ? '#cbd5e1' : danger ? S4.red    : outline ? 'transparent' : S4.darkTeal;
-  const color = disabled ? '#94a3b8' : danger ? '#fff'    : outline ? (danger ? S4.red : S4.darkTeal) : '#fff';
-  const border= disabled ? '#cbd5e1' : danger ? S4.red    : S4.darkTeal;
-  return (
-    <button onClick={disabled ? undefined : onClick} disabled={disabled}
-      style={{ background: bg, color, border: `1.5px solid ${border}`, borderRadius: 8, padding: sm ? '5px 14px' : '8px 18px', fontSize: sm ? 12 : 13, fontWeight: 600, cursor: disabled ? 'not-allowed' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
-      {children}
-    </button>
-  );
-};
+<!-- ════════════════════════════════════════════════════════
+     SCREEN 1 — ORG DASHBOARD (JANUARY, ROTA UNLOCKED)
+     ════════════════════════════════════════════════════════ -->
+<div class="screen active" id="screen1">
+  <div class="page">
 
-const FieldLabel = ({ children }) => (
-  <div style={{ fontSize: 11, fontWeight: 700, color: S4.subtext, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.4 }}>{children}</div>
-);
-
-const S4Select = ({ value, onChange, children }) => (
-  <select value={value} onChange={onChange} style={{ width: '100%', border: `1px solid ${S4.border}`, borderRadius: 8, padding: '8px 10px', fontSize: 13, background: '#fff', color: S4.text, outline: 'none' }}>
-    {children}
-  </select>
-);
-
-const S4Input = ({ value, onChange, placeholder, prefix }) => (
-  <div style={{ display: 'flex', border: `1px solid ${S4.border}`, borderRadius: 8, overflow: 'hidden', background: '#fff' }}>
-    {prefix && <span style={{ padding: '8px 10px', background: S4.cardBg, fontSize: 13, color: S4.subtext, borderRight: `1px solid ${S4.border}`, flexShrink: 0 }}>{prefix}</span>}
-    <input value={value} onChange={onChange} placeholder={placeholder}
-      style={{ flex: 1, padding: '8px 10px', fontSize: 13, border: 'none', outline: 'none', color: S4.text, background: 'transparent', minWidth: 0, width: '100%' }} />
-  </div>
-);
-
-const ModalShell = ({ title, subtitle, badge, badgeColor, onClose, children, footer, maxWidth = 580 }) => (
-  <div style={{ position: 'fixed', inset: 0, background: 'rgba(13,61,79,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: 16 }}>
-    <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 24px 64px rgba(0,0,0,0.22)', width: '100%', maxWidth, maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ background: S4.cardBg, borderBottom: `1px solid ${S4.border}`, borderRadius: '12px 12px 0 0', padding: '14px 20px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexShrink: 0 }}>
-        <div>
-          {badge && <div style={{ background: badgeColor || S4.lightTeal, color: badgeColor ? '#fff' : S4.midTeal, borderRadius: 6, padding: '2px 8px', fontSize: 10, fontWeight: 700, marginBottom: 5, display: 'inline-block', textTransform: 'uppercase', letterSpacing: 0.5 }}>{badge}</div>}
-          <div style={{ fontWeight: 700, color: S4.text, fontSize: 15 }}>{title}</div>
-          {subtitle && <div style={{ fontSize: 12, color: S4.subtext, marginTop: 3 }}>{subtitle}</div>}
-        </div>
-        <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, color: '#94a3b8', cursor: 'pointer', lineHeight: 1, marginLeft: 12, flexShrink: 0 }}>✕</button>
-      </div>
-      <div style={{ overflowY: 'auto', flex: 1, padding: 20 }}>{children}</div>
-      {footer && <div style={{ borderTop: `1px solid ${S4.border}`, background: S4.cardBg, borderRadius: '0 0 12px 12px', padding: '12px 20px', flexShrink: 0 }}>{footer}</div>}
+    <div class="step-indicator">
+      <div class="step-num">1</div>
+      Bureau operator opens The Anchor Group dashboard. The January pay run is ready to process but the rota has not been locked.
     </div>
-  </div>
-);
 
-const InfoBanner = ({ color, text }) => (
-  <div style={{ background: color === 'blue' ? '#eff6ff' : color === 'amber' ? S4.amberLight : S4.greenLight, border: `1px solid ${color === 'blue' ? '#bfdbfe' : color === 'amber' ? S4.amberBorder : '#6ee7b7'}`, borderRadius: 8, padding: '10px 14px', fontSize: 12, color: color === 'blue' ? '#1d4ed8' : color === 'amber' ? '#92400e' : '#065f46', display: 'flex', gap: 8 }}>
-    <span style={{ flexShrink: 0 }}>{color === 'blue' ? 'ℹ' : color === 'amber' ? '⚠' : '✓'}</span><span style={{ flex: 1 }}>{text}</span>
-  </div>
-);
-
-const StagedList = ({ items, onRemove, groupByEmp }) => (
-  <div style={{ border: `1px solid ${S4.border}`, borderRadius: 8, overflow: 'hidden' }}>
-    <div style={{ padding: '8px 14px', background: S4.cardBg, borderBottom: `1px solid ${S4.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-      <span style={{ fontSize: 13, fontWeight: 600, color: S4.text }}>Amendments to Save</span>
-      <span style={{ background: S4.darkTeal, color: '#fff', borderRadius: 999, padding: '1px 8px', fontSize: 11, fontWeight: 700 }}>{items.length}</span>
-    </div>
-    {groupByEmp ? (
-      EMPLOYEES.map(emp => {
-        const rows = items.filter(a => a.empId === emp.id);
-        if (!rows.length) return null;
-        return (
-          <div key={emp.id} style={{ borderBottom: `1px solid ${S4.border}` }}>
-            <div style={{ padding: '6px 14px', background: '#f8fafc', borderBottom: `1px solid ${S4.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: S4.text }}>{emp.name}</span>
-              <span style={{ fontSize: 11, color: S4.subtext }}>{rows.length} amendment{rows.length > 1 ? 's' : ''}</span>
-            </div>
-            {rows.map(a => (
-              <div key={a.id} style={{ padding: '8px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                <div style={{ fontSize: 12, color: S4.text }}><span style={{ fontWeight: 600 }}>{a.element}</span><span style={{ color: S4.subtext, marginLeft: 6 }}>· £{a.value}</span>{a.desc && <span style={{ color: '#94a3b8', marginLeft: 6, fontStyle: 'italic' }}>{a.desc}</span>}</div>
-                <button onClick={() => onRemove(a.id)} style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', fontSize: 12 }}>Remove</button>
-              </div>
-            ))}
-          </div>
-        );
-      })
-    ) : items.map(a => (
-      <div key={a.id} style={{ padding: '10px 14px', borderBottom: `1px solid ${S4.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-        <div>
-          <div style={{ fontSize: 13, fontWeight: 600, color: S4.text }}>{a.empName}</div>
-          <div style={{ fontSize: 12, color: S4.subtext }}>{a.element} · <span style={{ fontWeight: 600, color: S4.text }}>£{a.value}</span>{a.desc && <span style={{ fontStyle: 'italic', marginLeft: 4 }}>{a.desc}</span>}</div>
-        </div>
-        <button onClick={() => onRemove(a.id)} style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', fontSize: 12 }}>Remove</button>
-      </div>
-    ))}
-  </div>
-);
-
-// ─── Main component ────────────────────────────────────────────────────────────
-const PayrollAmendmentsWireframe = () => {
-
-  const [status, setStatus]         = useState('Under Review');
-  const [amendments, setAmendments] = useState([]);
-  const [amendHistory, setAmendHistory] = useState([]); // FIX 7: persists after recalculate
-  const [rerunDone, setRerunDone]   = useState(false);
-
-  // Modal visibility
-  const [showAmendConfirm,  setShowAmendConfirm]  = useState(false); // FIX 1
-  const [showApproveConfirm,setShowApproveConfirm]= useState(false); // FIX 10
-  const [showTypeModal,     setShowTypeModal]      = useState(false);
-  const [showSourcePopup,   setShowSourcePopup]    = useState(false);
-  const [showBulkPopup,     setShowBulkPopup]      = useState(false);
-  const [showRotaConfirm,   setShowRotaConfirm]    = useState(false);
-  const [showRowModal,      setShowRowModal]        = useState(false);
-  const [rowEmp,            setRowEmp]             = useState(null);
-  const [showProfile,       setShowProfile]        = useState(false);
-  const [profileEmp,        setProfileEmp]         = useState(null);
-  const [showAmendHistory,  setShowAmendHistory]   = useState(false); // FIX 7
-
-  // Source data form
-  const [srcEmp,    setSrcEmp]    = useState('');
-  const [srcEl,     setSrcEl]     = useState('');
-  const [srcVal,    setSrcVal]    = useState('');
-  const [srcDesc,   setSrcDesc]   = useState('');
-  const [srcStaged, setSrcStaged] = useState([]);
-
-  // Bulk form
-  const [bulkIds,      setBulkIds]      = useState([]);
-  const [bulkActiveId, setBulkActiveId] = useState(null);
-  const [bulkStaged,   setBulkStaged]   = useState([]);
-  const [bulkEl,       setBulkEl]       = useState('');
-  const [bulkVal,      setBulkVal]      = useState('');
-  const [bulkDesc,     setBulkDesc]     = useState('');
-
-  // Profile deductions
-  const [dedRows,    setDedRows]    = useState([
-    { id: 'pd1', start: '21/08/2021', end: '21/08/2026', element: 'Healthcare', amount: '£45',  pending: false },
-    { id: 'pd2', start: '01/01/2020', end: '01/01/2025', element: 'Rent',       amount: '£100', pending: false },
-    { id: 'pd3', start: '30/09/2019', end: '30/12/2025', element: 'Childcare',  amount: '£120', pending: false },
-  ]);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [dedType,  setDedType]  = useState('Deduction');
-  const [dedEl,    setDedEl]    = useState('');
-  const [dedAmt,   setDedAmt]   = useState('');
-  const [dedStart, setDedStart] = useState('');
-  const [dedEnd,   setDedEnd]   = useState('');
-  const [dedToast, setDedToast] = useState(false);
-
-  // Reactive: if all amendments removed while recalculate required, revert to Amend Payroll
-  useEffect(() => {
-    if (status === 'Recalculate Required' && amendments.length === 0) {
-      setStatus('Amend Payroll');
-    }
-  }, [amendments, status]);
-
-  const removeAmendment = (id) => {
-    setAmendments(p => p.filter(x => x.id !== id));
-  };
-
-  const isAmendMode     = status === 'Amend Payroll';
-  const isRerunRequired = status === 'Recalculate Required';
-  const isApproved      = status === 'Approved';
-  const amendedCount    = [...new Set(amendments.map(a => a.empId))].length;
-  const bulkActiveEmp   = EMPLOYEES.find(e => e.id === bulkActiveId);
-  const selectedEmps    = EMPLOYEES.filter(e => bulkIds.includes(e.id));
-
-  const resetSrc  = () => { setSrcEmp(''); setSrcEl(''); setSrcVal(''); setSrcDesc(''); setSrcStaged([]); };
-  const resetBulk = () => { setBulkIds([]); setBulkActiveId(null); setBulkStaged([]); setBulkEl(''); setBulkVal(''); setBulkDesc(''); };
-  const resetAll  = () => { setStatus('Under Review'); setAmendments([]); setAmendHistory([]); setRerunDone(false); resetSrc(); resetBulk(); };
-
-  // ── Dynamic figure helpers ─────────────────────────────────────────────
-  const parseAmt = (s) => parseFloat(String(s).replace(/[£,]/g, '')) || 0;
-  const fmtAmt   = (n) => '£' + n.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-  const BASE_GROSS   = 13800.00;
-  const BASE_NET     = 10544.55;
-  const BASE_PENSION =  1240.00;
-  const BASE_HMRC    =  1800.45;
-  const NET_RATIO     = BASE_NET     / BASE_GROSS;
-  const PENSION_RATIO = BASE_PENSION / BASE_GROSS;
-  const HMRC_RATIO    = BASE_HMRC    / BASE_GROSS;
-
-  // Pending amendments total (not yet recalculated)
-  const pendingTotal  = amendments.reduce((s, a) => s + parseAmt(a.value), 0);
-  // Applied amendments total (post recalculate)
-  const appliedTotal  = amendHistory.reduce((s, a) => s + parseAmt(a.value), 0);
-
-  // What figures to show on the cards
-  const displayGross   = rerunDone ? BASE_GROSS + appliedTotal : BASE_GROSS;
-  const displayNet     = rerunDone ? displayGross * NET_RATIO     : BASE_NET;
-  const displayPension = rerunDone ? displayGross * PENSION_RATIO : BASE_PENSION;
-  const displayHMRC    = rerunDone ? displayGross * HMRC_RATIO    : BASE_HMRC;
-
-  const dynCards = [
-    { label: 'Net Pay',               val: displayNet,     base: BASE_NET,     diff: displayNet     - BASE_NET     },
-    { label: 'Gross Pay',             val: displayGross,   base: BASE_GROSS,   diff: displayGross   - BASE_GROSS   },
-    { label: 'Pension contributions', val: displayPension, base: BASE_PENSION, diff: displayPension - BASE_PENSION },
-    { label: 'HMRC payments',         val: displayHMRC,    base: BASE_HMRC,    diff: displayHMRC    - BASE_HMRC    },
-  ];
-
-  // Per-employee amended gross
-  const empDisplayGross = (emp) => {
-    const base = parseAmt(emp.gross);
-    const pending = amendments.filter(a => a.empId === emp.id).reduce((s,a) => s + parseAmt(a.value), 0);
-    const applied = amendHistory.filter(a => a.empId === emp.id).reduce((s,a) => s + parseAmt(a.value), 0);
-    if (rerunDone) return fmtAmt(base + applied);
-    if (pending > 0) return fmtAmt(base + pending);
-    return emp.gross;
-  };
-
-  const addSrcStaged = () => {
-    if (!srcEmp || !srcEl || !srcVal) return;
-    const e = EMPLOYEES.find(x => x.id === srcEmp);
-    setSrcStaged(p => [...p, { id: Date.now(), empId: srcEmp, empName: e.name, element: srcEl, value: srcVal, desc: srcDesc }]);
-    setSrcEl(''); setSrcVal(''); setSrcDesc('');
-  };
-  const saveSrc = () => {
-    setAmendments(p => [...p, ...srcStaged]);
-    setStatus('Recalculate Required'); setRerunDone(false);
-    setShowSourcePopup(false); resetSrc();
-  };
-
-  // FIX 12: Checkbox toggles selection; row click only focuses
-  const toggleBulkCheck = (e, id) => {
-    e.stopPropagation();
-    setBulkIds(p => {
-      if (p.includes(id)) {
-        const next = p.filter(x => x !== id);
-        if (bulkActiveId === id) setBulkActiveId(next[0] || null);
-        return next;
-      }
-      return [...p, id];
-    });
-  };
-  const focusBulkRow = (id) => {
-    setBulkActiveId(id);
-    setBulkEl(''); setBulkVal(''); setBulkDesc('');
-  };
-
-  const addBulkStaged = () => {
-    if (!bulkEl || !bulkVal) return;
-    const targets = bulkIds.length > 0 ? bulkIds : (bulkActiveId ? [bulkActiveId] : []);
-    if (targets.length === 0) return;
-    const newEntries = targets.map(id => {
-      const emp = EMPLOYEES.find(e => e.id === id);
-      return { id: Date.now() + Math.random(), empId: id, empName: emp.name, element: bulkEl, value: bulkVal, desc: bulkDesc };
-    });
-    setBulkStaged(p => [...p, ...newEntries]);
-    setBulkEl(''); setBulkVal(''); setBulkDesc('');
-  };
-  const saveBulk = () => {
-    setAmendments(p => [...p, ...bulkStaged]);
-    setStatus('Recalculate Required'); setRerunDone(false);
-    setShowBulkPopup(false); resetBulk();
-  };
-
-  // FIX 7: save history before clearing amendments
-  const triggerRerun = () => {
-    setAmendHistory(prev => [...prev, ...amendments]);
-    setStatus('Under Review'); setRerunDone(true); setAmendments([]);
-  };
-
-  const saveDed = () => {
-    if (!dedEl || !dedAmt || !dedStart) return;
-    const row = { id: `pd-${Date.now()}`, start: dedStart, end: dedEnd || 'Ongoing', element: dedEl, amount: dedAmt.startsWith('£') ? dedAmt : `£${dedAmt}`, pending: true, type: dedType };
-    setDedRows(p => [...p, row]);
-    setAmendments(p => [...p, { id: row.id, empId: profileEmp?.id, empName: profileEmp?.name, element: `${dedType}: ${dedEl}`, value: dedAmt.replace('£',''), desc: dedStart + (dedEnd ? ` – ${dedEnd}` : '') }]);
-    setStatus('Recalculate Required'); setRerunDone(false);
-    setDedEl(''); setDedAmt(''); setDedStart(''); setDedEnd(''); setDedType('Deduction');
-    setShowAddForm(false); setDedToast(true); setTimeout(() => setDedToast(false), 3000);
-  };
-
-  // ══════════════════════════════════════════════════════════════════════════
-  // FIX 9: Journey tracker — sticky top bar
-  // ══════════════════════════════════════════════════════════════════════════
-  const JourneyBar = () => {
-    const steps = [
-      { label: 'Under Review',    done: ['Amend Payroll','Recalculate Required','Approved'].includes(status) || rerunDone, active: status === 'Under Review' && !rerunDone },
-      { label: 'Amend Payroll',   done: ['Recalculate Required','Approved'].includes(status) || rerunDone, active: isAmendMode },
-      { label: 'Save amendments', done: isRerunRequired || rerunDone || isApproved, active: isAmendMode && amendments.length > 0 },
-      { label: 'Re-calculate',    done: rerunDone || isApproved, active: isRerunRequired },
-      { label: 'Approve',         done: isApproved, active: rerunDone && !isApproved },
-    ];
-    const guidance = status === 'Under Review' && !rerunDone ? 'Click "Amend payroll" to unlock amendments'
-      : isAmendMode && amendments.length === 0 ? 'Click ✏ on any employee row to add amendments'
-      : isAmendMode ? 'Amendments added — save them, then re-calculate'
-      : isRerunRequired ? `${amendments.length} amendment${amendments.length !== 1 ? 's' : ''} saved — re-calculate when ready`
-      : rerunDone && !isApproved ? 'Re-calculate complete — review updated figures then approve'
-      : isApproved ? '✓ Payroll approved and locked' : '';
-    return (
-      <div style={{ background: '#fff', borderBottom: `1px solid ${S4.border}`, padding: '10px 28px', position: 'sticky', top: 0, zIndex: 10 }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 0, justifyContent: 'space-between', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            {steps.map((s, i, arr) => (
-              <React.Fragment key={s.label}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 12px', borderRadius: 999, fontSize: 12, fontWeight: 600,
-                  background: s.done ? S4.greenLight : s.active ? S4.darkTeal : '#f1f5f9',
-                  color:      s.done ? S4.green     : s.active ? '#fff'       : '#94a3b8' }}>
-                  {s.done && <span>✓</span>}{s.label}
-                </div>
-                {i < arr.length - 1 && <span style={{ color: '#cbd5e1', fontSize: 13, margin: '0 2px' }}>→</span>}
-              </React.Fragment>
-            ))}
-          </div>
-          <div style={{ fontSize: 12, color: S4.subtext, fontStyle: 'italic', marginTop: 2 }}>{guidance}</div>
-        </div>
-      </div>
-    );
-  };
-
-  // ══════════════════════════════════════════════════════════════════════════
-  // FIX 1: Amend confirmation modal
-  // ══════════════════════════════════════════════════════════════════════════
-  const AmendConfirmModal = () => (
-    <ModalShell title="Start amendment process?" subtitle="Please read before continuing" onClose={() => setShowAmendConfirm(false)}
-      footer={
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-          <TealBtn outline onClick={() => setShowAmendConfirm(false)}>Cancel — keep as Under Review</TealBtn>
-          <TealBtn onClick={() => { setStatus('Amend Payroll'); setShowAmendConfirm(false); }}>Yes, enter Amend mode</TealBtn>
-        </div>
-      }>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <InfoBanner color="amber" text="Entering amend mode will require a re-calculate before this payroll can be approved. This cannot be skipped." />
-        <div style={{ background: S4.cardBg, border: `1px solid ${S4.border}`, borderRadius: 10, padding: 16 }}>
-          <div style={{ fontWeight: 700, color: S4.text, fontSize: 13, marginBottom: 10 }}>What happens next:</div>
-          {[
-            'Amendments are unlocked — you can add, edit or remove pay element changes',
-            'Once saved, a Re-calculate is required before Approve becomes available',
-            'You can add more amendments after saving, up until you Re-calculate',
-            'Re-calculating will update all summary figures for your review',
-          ].map((s, i) => (
-            <div key={i} style={{ display: 'flex', gap: 10, fontSize: 13, color: S4.subtext, marginBottom: 8 }}>
-              <span style={{ color: S4.midTeal, flexShrink: 0, fontWeight: 700 }}>{i + 1}.</span><span>{s}</span>
-            </div>
-          ))}
-        </div>
-        <div style={{ fontSize: 12, color: S4.subtext }}>Payroll period: <strong>23/03/2025 – 30/03/2025</strong> · 5 employees · Total gross: <strong>£13,800.00</strong></div>
-      </div>
-    </ModalShell>
-  );
-
-  // ══════════════════════════════════════════════════════════════════════════
-  // FIX 10: Approve confirmation modal
-  // ══════════════════════════════════════════════════════════════════════════
-  const ApproveConfirmModal = () => (
-    <ModalShell title="Approve this payroll?" subtitle="This action cannot be undone" onClose={() => setShowApproveConfirm(false)}
-      footer={
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-          <TealBtn outline onClick={() => setShowApproveConfirm(false)}>Cancel — go back</TealBtn>
-          <TealBtn onClick={() => { setStatus('Approved'); setShowApproveConfirm(false); }}>Yes, approve payroll</TealBtn>
-        </div>
-      }>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <InfoBanner color="amber" text="Approving will finalise this payroll run. Payments will be processed and this payroll will be locked for editing." />
-        <div style={{ background: S4.cardBg, border: `1px solid ${S4.border}`, borderRadius: 10, padding: 16 }}>
-          <div style={{ fontWeight: 700, color: S4.text, fontSize: 13, marginBottom: 12 }}>Payroll summary you are approving:</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            {CARDS.map((c, i) => (
-              <div key={i} style={{ background: '#fff', border: `1px solid ${S4.border}`, borderRadius: 8, padding: '10px 14px' }}>
-                <div style={{ fontSize: 11, color: S4.subtext }}>{c.label}</div>
-                <div style={{ fontSize: 20, fontWeight: 700, color: S4.text, marginTop: 3 }}>{rerunDone ? c.after : c.before}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div style={{ fontSize: 12, color: S4.subtext }}>Period: <strong>23/03/2025 – 30/03/2025</strong> · <strong>5 employees</strong></div>
-      </div>
-    </ModalShell>
-  );
-
-  // ══════════════════════════════════════════════════════════════════════════
-  // FIX 7: Amendment history panel
-  // ══════════════════════════════════════════════════════════════════════════
-  const AmendHistoryModal = () => (
-    <ModalShell title="Amendment History" subtitle="All amendments applied in this payroll run" onClose={() => setShowAmendHistory(false)}>
-      {amendHistory.length === 0 ? (
-        <div style={{ textAlign: 'center', color: '#94a3b8', padding: 40, fontSize: 13 }}>No amendments recorded yet</div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {EMPLOYEES.map(emp => {
-            const rows = amendHistory.filter(a => a.empId === emp.id);
-            if (!rows.length) return null;
-            return (
-              <div key={emp.id} style={{ border: `1px solid ${S4.border}`, borderRadius: 10, overflow: 'hidden' }}>
-                <div style={{ padding: '8px 14px', background: S4.cardBg, borderBottom: `1px solid ${S4.border}`, display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <Avatar emp={emp} size={24} />
-                  <span style={{ fontWeight: 700, fontSize: 13, color: S4.text }}>{emp.name}</span>
-                  <span style={{ fontSize: 11, color: S4.subtext, marginLeft: 'auto' }}>{rows.length} amendment{rows.length > 1 ? 's' : ''}</span>
-                </div>
-                {rows.map((a, i) => (
-                  <div key={i} style={{ padding: '10px 14px', borderBottom: `1px solid ${S4.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff' }}>
-                    <div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: S4.text }}>{a.element}</div>
-                      {a.desc && <div style={{ fontSize: 11, color: S4.subtext, marginTop: 2 }}>{a.desc}</div>}
-                    </div>
-                    <div style={{ display: 'flex', align: 'center', gap: 8 }}>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: S4.green }}>£{a.value}</span>
-                      <span style={{ background: S4.greenLight, color: S4.green, borderRadius: 999, padding: '1px 8px', fontSize: 10, fontWeight: 700 }}>Applied</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </ModalShell>
-  );
-
-  // ══════════════════════════════════════════════════════════════════════════
-  // PAYROLL SUMMARY SCREEN
-  // ══════════════════════════════════════════════════════════════════════════
-  const PayrollScreen = () => (
-    <div style={{ minHeight: '100vh', background: S4.pageBg, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
-
-      {/* FIX 9: Sticky journey tracker at top */}
-      {JourneyBar()}
-
-      <div style={{ padding: '22px 28px', maxWidth: 1100, margin: '0 auto' }}>
-
-        {/* Page header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18, flexWrap: 'wrap', gap: 12 }}>
-          <h1 style={{ fontSize: 20, fontWeight: 700, color: S4.text, margin: 0 }}>MCSA Cafe Holdings Ltd. – Payroll Summary report</h1>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-
-            {/* Status pills */}
-            {status === 'Amend Payroll'      && <span style={{ background: S4.lightTeal,  color: S4.midTeal,  borderRadius: 999, padding: '4px 12px', fontSize: 12, fontWeight: 700 }}>Amend Payroll</span>}
-            {isRerunRequired                  && <span style={{ background: S4.amberLight, color: '#92400e',   borderRadius: 999, padding: '4px 12px', fontSize: 12, fontWeight: 700 }}>Recalculate Required</span>}
-            {rerunDone && !isRerunRequired && !isApproved && <span style={{ background: S4.greenLight, color: S4.green, borderRadius: 999, padding: '4px 12px', fontSize: 12, fontWeight: 700 }}>Recalculate Complete</span>}
-            {isApproved                       && <span style={{ background: S4.greenLight, color: S4.green,   borderRadius: 999, padding: '4px 12px', fontSize: 12, fontWeight: 700 }}>Approved</span>}
-
-            {/* FIX 7: Amendment history link */}
-            {amendHistory.length > 0 && (
-              <button onClick={() => setShowAmendHistory(true)} style={{ fontSize: 12, color: S4.midTeal, background: 'none', border: `1px solid ${S4.border}`, borderRadius: 6, padding: '5px 12px', cursor: 'pointer' }}>
-                📋 Amendment history ({amendHistory.length})
-              </button>
-            )}
-
-            {/* FIX 1: "Amend payroll" now opens confirmation modal */}
-            {!isAmendMode && !isRerunRequired && !rerunDone && !isApproved && (
-              <TealBtn outline onClick={() => setShowAmendConfirm(true)}>✏ Amend payroll</TealBtn>
-            )}
-
-            {/* FIX 3: Exit amend mode (only if no amendments saved yet) */}
-            {isAmendMode && amendments.length === 0 && (
-              <TealBtn outline danger onClick={() => setStatus('Under Review')}>✕ Cancel amend</TealBtn>
-            )}
-
-            {/* Actions button — stays through amend + recalculate required */}
-            {(isAmendMode || isRerunRequired) && !rerunDone && !isApproved && (
-              <TealBtn outline onClick={() => setShowTypeModal(true)}>⊕ Actions</TealBtn>
-            )}
-
-            {/* Re-calculate / Approve */}
-            {(isAmendMode || isRerunRequired) ? (
-              <TealBtn disabled={amendments.length === 0} onClick={triggerRerun}>↻ Re-calculate</TealBtn>
-            ) : (
-              // FIX 10: Approve opens confirmation modal
-              <TealBtn disabled={isApproved} onClick={() => { if (!isApproved) setShowApproveConfirm(true); }}>
-                {isApproved ? '✓ Approved' : 'Approve payroll ✓'}
-              </TealBtn>
-            )}
-          </div>
-        </div>
-
-        {/* Banners */}
-        {/* FIX 2: Amend mode banner is now blue/teal, not red */}
-        {isAmendMode && (
-          <div style={{ background: '#eff6ff', border: `1px solid #bfdbfe`, borderRadius: 10, padding: '12px 16px', marginBottom: 16, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <span style={{ color: '#2563eb', marginTop: 1, flexShrink: 0 }}>ℹ</span>
-              <div>
-                <div style={{ fontWeight: 700, color: '#1d4ed8', fontSize: 14 }}>Amendment mode — payroll is unlocked for editing</div>
-                <div style={{ fontSize: 13, color: '#1d4ed8', marginTop: 2 }}>Click ✏ on any employee row to add amendments. Re-calculate when done to update figures.</div>
-              </div>
-            </div>
-            {/* FIX 3: Cancel amend also available in banner if no amendments yet */}
-            {amendments.length === 0 && (
-              <button onClick={() => setStatus('Under Review')} style={{ fontSize: 12, color: '#2563eb', background: 'none', border: `1px solid #bfdbfe`, borderRadius: 6, padding: '4px 10px', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                ✕ Cancel amend
-              </button>
-            )}
-          </div>
-        )}
-        {isRerunRequired && (
-          <div style={{ background: S4.amberLight, border: `1px solid ${S4.amberBorder}`, borderRadius: 10, padding: '12px 16px', marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <span style={{ color: S4.amber, flexShrink: 0 }}>⚠</span>
-              <div>
-                <div style={{ fontWeight: 700, color: '#92400e', fontSize: 14 }}>Re-calculate required before approval</div>
-                <div style={{ fontSize: 13, color: '#92400e', marginTop: 2 }}>
-                  {amendments.length === 0
-                    ? 'All amendments have been removed. Add new amendments or re-calculate to continue.'
-                    : `${amendments.length} amendment${amendments.length !== 1 ? 's' : ''} across ${amendedCount} employee${amendedCount !== 1 ? 's' : ''}. You can still add more amendments before re-calculating.`}
-                </div>
-              </div>
-            </div>
-            <TealBtn disabled={amendments.length === 0} onClick={triggerRerun}>↻ Re-calculate</TealBtn>
-          </div>
-        )}
-        {rerunDone && !isRerunRequired && !isApproved && (
-          <div style={{ background: S4.greenLight, border: `1px solid #6ee7b7`, borderRadius: 10, padding: '12px 16px', marginBottom: 16, display: 'flex', gap: 10 }}>
-            <span style={{ color: S4.green, flexShrink: 0 }}>✓</span>
-            <div style={{ fontSize: 14, color: '#065f46', fontWeight: 500 }}>Re-calculate complete — updated figures shown below. Review and approve when ready.</div>
-          </div>
-        )}
-        {isApproved && (
-          <div style={{ background: S4.greenLight, border: `1px solid #6ee7b7`, borderRadius: 10, padding: '12px 16px', marginBottom: 16, display: 'flex', gap: 10 }}>
-            <span style={{ color: S4.green, flexShrink: 0 }}>✓</span>
-            <div style={{ fontSize: 14, color: '#065f46', fontWeight: 500 }}>Payroll approved and locked. No further changes can be made.</div>
-          </div>
-        )}
-
-        {/* Summary cards — dynamic */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 20 }}>
-          {dynCards.map((c, i) => (
-            <div key={i} style={{ background: rerunDone ? '#f0fdf4' : S4.cardBg, border: `1px solid ${rerunDone ? '#6ee7b7' : S4.border}`, borderRadius: 10, padding: '14px 18px', transition: 'background 0.3s' }}>
-              <div style={{ fontSize: 12, color: S4.subtext, marginBottom: 5 }}>{c.label}</div>
-              <div style={{ fontSize: 26, fontWeight: 700, color: S4.text }}>{fmtAmt(c.val)}</div>
-              {rerunDone && c.diff !== 0 && (
-                <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: c.diff > 0 ? S4.green : S4.red }}>{c.diff > 0 ? '+' : ''}{fmtAmt(c.diff)}</span>
-                  <span style={{ fontSize: 11, color: S4.subtext }}>was {fmtAmt(c.base)}</span>
-                </div>
-              )}
-              {!rerunDone && pendingTotal > 0 && (
-                <div style={{ marginTop: 6, fontSize: 11, color: '#92400e', fontStyle: 'italic' }}>
-                  pending +{fmtAmt(i === 0 ? pendingTotal * NET_RATIO : i === 1 ? pendingTotal : i === 2 ? pendingTotal * PENSION_RATIO : pendingTotal * HMRC_RATIO)}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* Wireframe disclaimer */}
-        <div style={{ fontSize: 11, color: '#94a3b8', fontStyle: 'italic', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: 4, padding: '1px 6px', fontStyle: 'normal', fontWeight: 600, fontSize: 10, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 0.4 }}>Wireframe</span>
-          Gross reflects actual amendment values. Net Pay, Pension and HMRC are illustrative estimates — real figures depend on the payroll calculation engine.
-        </div>
-
-        {/* Pay period label */}
-        <div style={{ display: 'inline-block', background: S4.midTeal, color: '#fff', borderRadius: 6, padding: '4px 13px', fontSize: 12, fontWeight: 700, marginBottom: 14 }}>
-          Pay period: 23/03/2025 – 30/03/2025
-        </div>
-
-        {/* Search + Download */}
-        <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
-          <div style={{ flex: 1, border: `1px solid ${S4.border}`, borderRadius: 8, padding: '8px 12px', background: '#fff', fontSize: 13, color: '#aab', display: 'flex', alignItems: 'center', gap: 8 }}>
-            🔍 Search using PAYE ref...
-          </div>
-          <button style={{ border: `1px solid ${S4.border}`, borderRadius: 8, padding: '8px 14px', background: '#fff', fontSize: 13, color: S4.subtext, cursor: 'pointer' }}>⬇ Download</button>
-        </div>
-
-        {/* Employee table */}
-        <div style={{ border: `1px solid ${S4.border}`, borderRadius: 10, overflow: 'hidden' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 0.8fr 0.7fr 0.9fr 0.5fr 1fr 1.4fr 44px', background: S4.darkTeal, padding: '11px 16px', gap: 8, alignItems: 'center' }}>
-            {['Employee details ↕','Area ↕','Tax code','W1M1','Total hours','SL','Gross pay','Pay elements',''].map((h, i) => (
-              <div key={i} style={{ color: '#fff', fontSize: 12, fontWeight: 600, textAlign: i >= 5 ? 'right' : 'left' }}>{h}</div>
-            ))}
-          </div>
-
-          {EMPLOYEES.map((emp, idx) => {
-            const empAmends = amendments.filter(a => a.empId === emp.id);
-            const hasAmends = empAmends.length > 0;
-            const histAmends = amendHistory.filter(a => a.empId === emp.id);
-            return (
-              <div key={emp.id} style={{ borderBottom: idx < EMPLOYEES.length - 1 ? `1px solid ${S4.border}` : 'none', background: hasAmends && !rerunDone ? '#fffbeb' : idx % 2 === 0 ? '#fff' : '#fafcfd' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 0.8fr 0.7fr 0.9fr 0.5fr 1fr 1.4fr 44px', padding: '11px 16px', gap: 8, alignItems: 'center' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <Avatar emp={emp} size={34} />
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: 13, fontWeight: 600, color: S4.text }}>{emp.name}</span>
-                        {hasAmends && !rerunDone && <span style={{ background: S4.amberLight, color: '#92400e', borderRadius: 999, padding: '1px 7px', fontSize: 10, fontWeight: 700 }}>{empAmends.length} amended</span>}
-                        {rerunDone && histAmends.length > 0 && <span style={{ background: S4.greenLight, color: S4.green, borderRadius: 999, padding: '1px 7px', fontSize: 10, fontWeight: 700 }}>updated</span>}
-                      </div>
-                      <div style={{ fontSize: 11, color: S4.subtext, marginTop: 1 }}>Payroll ID: {emp.id}</div>
-                    </div>
-                  </div>
-                  <div style={{ fontSize: 13, color: S4.text }}>{emp.area}</div>
-                  <div style={{ fontSize: 13, color: S4.text }}>{emp.taxCode}</div>
-                  <div style={{ fontSize: 13, color: S4.text }}>{emp.w1m1}</div>
-                  <div style={{ fontSize: 13, color: S4.text }}>{emp.hours}</div>
-                  <div style={{ fontSize: 13, color: S4.text, textAlign: 'right' }}>{emp.sl}</div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: S4.text, textAlign: 'right' }}>{empDisplayGross(emp)}</div>
-                  <div style={{ fontSize: 12 }}>
-                    {rerunDone && histAmends.length > 0 ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                        {histAmends.map((a, i) => (
-                          <span key={i} style={{ background: S4.greenLight, color: S4.green, borderRadius: 999, padding: '1px 8px', fontSize: 10, fontWeight: 700, display: 'inline-block' }}>{a.element}</span>
-                        ))}
-                      </div>
-                    ) : hasAmends && !rerunDone ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                        {empAmends.map((a, i) => (
-                          <span key={i} style={{ background: S4.amberLight, color: '#92400e', borderRadius: 999, padding: '1px 8px', fontSize: 10, fontWeight: 700, display: 'inline-block' }}>{a.element}</span>
-                        ))}
-                      </div>
-                    ) : <span style={{ color: '#cbd5e1', fontSize: 12 }}>—</span>}
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <button onClick={() => { setRowEmp(emp); setShowRowModal(true); }} title="Amend or view employee"
-                      style={{ background: 'none', border: `1px solid ${S4.border}`, borderRadius: 6, padding: '4px 8px', cursor: 'pointer', color: S4.subtext, fontSize: 13 }}>✏</button>
-                  </div>
-                </div>
-                {/* Inline amendment detail — FIX 6: show Remove button */}
-                {hasAmends && !rerunDone && (
-                  <div style={{ padding: '2px 16px 10px 72px', borderTop: `1px solid #fde68a` }}>
-                    {empAmends.map((a, i) => (
-                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, marginTop: 5, flexWrap: 'wrap' }}>
-                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: S4.amber, flexShrink: 0 }}></span>
-                        <span style={{ fontWeight: 700, color: '#92400e' }}>{a.element}</span>
-                        <span style={{ color: '#b45309' }}>£{a.value}</span>
-                        {a.desc && <span style={{ color: '#d97706', fontStyle: 'italic' }}>{a.desc}</span>}
-                        <span style={{ marginLeft: 'auto', background: S4.amberLight, color: '#92400e', borderRadius: 999, padding: '1px 8px', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>Pending recalculate</span>
-                        {/* FIX 6: Remove after save */}
-                        <button onClick={() => removeAmendment(a.id)}
-                          style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', fontSize: 11, padding: 0, flexShrink: 0 }}>Remove</button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        <div style={{ textAlign: 'right', marginTop: 10 }}>
-          <button onClick={resetAll} style={{ fontSize: 11, color: '#94a3b8', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>Reset wireframe</button>
-        </div>
-      </div>
-    </div>
-  );
-
-  // ══════════════════════════════════════════════════════════════════════════
-  // STORY 1 — TYPE MODAL
-  // ══════════════════════════════════════════════════════════════════════════
-  const TypeModal = () => (
-    <ModalShell title="Select Amendment Type" subtitle="Choose how you want to make amendments" onClose={() => setShowTypeModal(false)}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {[
-          { bg: '#eff6ff', border: '#bfdbfe', iconBg: '#dbeafe', icon: '✏', iconColor: '#2563eb', label: 'Source Data Amendment', desc: 'Amend a pay element for a single employee — select pay element, enter value and optional description.', onClick: () => { setShowTypeModal(false); setShowSourcePopup(true); } },
-          { bg: '#f5f3ff', border: '#ddd6fe', iconBg: '#ede9fe', icon: '≡', iconColor: '#7c3aed', label: 'Bulk Amendment', desc: 'Select multiple employees and add individual amendments per employee. Review all before saving.', onClick: () => { setShowTypeModal(false); setShowBulkPopup(true); } },
-          { bg: '#f0fdf4', border: '#bbf7d0', iconBg: '#dcfce7', icon: '→', iconColor: '#16a34a', label: 'Rota (Hours) Amendment', desc: 'Navigate to S4 Rota to amend hours. You will leave this screen.', warn: '⚠ Unsaved changes will be lost', onClick: () => { setShowTypeModal(false); setShowRotaConfirm(true); } },
-        ].map(opt => (
-          <button key={opt.label} onClick={opt.onClick} style={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: 14, background: opt.bg, border: `2px solid ${opt.border}`, borderRadius: 10, cursor: 'pointer', textAlign: 'left' }}>
-            <div style={{ width: 38, height: 38, background: opt.iconBg, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: opt.iconColor, fontSize: 17, fontWeight: 700 }}>{opt.icon}</div>
-            <div>
-              <div style={{ fontWeight: 700, color: S4.text, fontSize: 14 }}>{opt.label}</div>
-              <div style={{ fontSize: 12, color: S4.subtext, marginTop: 3 }}>{opt.desc}</div>
-              {opt.warn && <div style={{ fontSize: 11, color: S4.red, marginTop: 4, fontWeight: 600 }}>{opt.warn}</div>}
-            </div>
-          </button>
-        ))}
-      </div>
-    </ModalShell>
-  );
-
-  // ══════════════════════════════════════════════════════════════════════════
-  // STORY 2 — SOURCE DATA POPUP
-  // ══════════════════════════════════════════════════════════════════════════
-  const SourcePopup = () => (
-    <ModalShell badge="Source Data" badgeColor={S4.midTeal} title="Add Amendment" subtitle="Amendments require a payroll re-calculate before approval"
-      onClose={() => { setShowSourcePopup(false); resetSrc(); }}
-      footer={<div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}><TealBtn outline onClick={() => { setShowSourcePopup(false); resetSrc(); }}>Cancel</TealBtn><TealBtn disabled={srcStaged.length === 0} onClick={saveSrc}>Save Amendments ({srcStaged.length})</TealBtn></div>}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <div>
-          <FieldLabel>Employee *</FieldLabel>
-          <S4Select value={srcEmp} onChange={e => setSrcEmp(e.target.value)}>
-            <option value="">Select employee...</option>
-            {EMPLOYEES.map(e => <option key={e.id} value={e.id}>{e.name} (ID: {e.id})</option>)}
-          </S4Select>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+    <!-- Org header -->
+    <div class="org-header">
+      <div class="org-header-top">
+        <div style="display:flex;align-items:center;gap:14px;">
+          <div class="org-avatar">AG</div>
           <div>
-            <FieldLabel>Pay Element *</FieldLabel>
-            <S4Select value={srcEl} onChange={e => setSrcEl(e.target.value)}>
-              <option value="">Select pay element...</option>
-              {PAY_ELEMENTS.map(p => <option key={p} value={p}>{p}</option>)}
-            </S4Select>
+            <div class="org-name">The Anchor Group</div>
+            <div class="org-meta">Hospitality · 4 sites · 62 employees</div>
           </div>
-          <div><FieldLabel>Value *</FieldLabel><S4Input prefix="£" value={srcVal} onChange={e => setSrcVal(e.target.value)} placeholder="0.00" /></div>
         </div>
-        <div><FieldLabel>Description (optional)</FieldLabel><S4Input value={srcDesc} onChange={e => setSrcDesc(e.target.value)} placeholder="Add a note or identifier..." /></div>
-        <button onClick={addSrcStaged} disabled={!srcEmp || !srcEl || !srcVal}
-          style={{ width: '100%', padding: '9px', border: `2px dashed ${!srcEmp || !srcEl || !srcVal ? '#e2e8f0' : S4.border}`, borderRadius: 8, background: 'none', color: !srcEmp || !srcEl || !srcVal ? '#cbd5e1' : S4.subtext, fontSize: 13, fontWeight: 600, cursor: !srcEmp || !srcEl || !srcVal ? 'not-allowed' : 'pointer' }}>
-          + Add Amendment
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span class="pill pill-green">✓ PAYE Configured</span>
+          <span class="pill pill-green">✓ Active</span>
+          <button class="btn-icon">⚙ Org Settings</button>
+        </div>
+      </div>
+      <div class="org-header-bar">
+        <div class="paye-kv">PAYE Ref: <strong>120/A12345</strong></div>
+        <div class="paye-kv">Accounts Office: <strong>120PA00123456</strong></div>
+        <div class="paye-kv">Ref Name: <strong>THE ANCHOR GROUP</strong></div>
+        <div style="margin-left:auto;display:flex;gap:8px;">
+          <span class="pill pill-green" style="font-size:11px;">Employment Allowance: Yes</span>
+          <span class="pill pill-green" style="font-size:11px;">SER: Yes</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Frequencies -->
+    <div class="section-head">
+      <div>
+        <div class="section-title">Pay Frequencies</div>
+        <div class="section-sub">Next pay day, approval deadline, payment method and pay types for each frequency.</div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-outline btn-sm">⚙ Org Settings</button>
+        <button class="btn btn-primary btn-sm">＋ Add pay frequency</button>
+      </div>
+    </div>
+
+    <div class="freq-grid">
+
+      <!-- Monthly Salaried — ROTA UNLOCKED -->
+      <div class="freq-card" style="border-color:#fcd34d;">
+        <div class="freq-card-header">
+          <div>
+            <div class="freq-card-title">Monthly – Salaried</div>
+            <div class="freq-card-sub">Monthly · BACS</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span class="pill pill-green">Active</span>
+            <button class="btn-icon">✏ Edit</button>
+          </div>
+        </div>
+        <div class="freq-card-body">
+          <div class="stat-grid">
+            <div class="stat-box stat-box-green">
+              <div class="stat-label stat-label-green">Next Pay Day</div>
+              <div class="stat-value">28 Jan 2026</div>
+            </div>
+            <div class="stat-box stat-box-amber">
+              <div class="stat-label stat-label-amber">Approval Deadline</div>
+              <div class="stat-value">24 Jan 2026</div>
+            </div>
+          </div>
+          <div class="pay-method-row">
+            <span style="font-size:14px;">💳</span>
+            <span style="font-size:12px;color:#6b8a94;">Payment method:</span>
+            <span style="font-size:13px;font-weight:700;">BACS</span>
+          </div>
+          <!-- ROTA STATUS — UNLOCKED -->
+          <div class="rota-status-row rota-unlocked">
+            <span>⚠</span>
+            <span>Rota not locked — payroll can still be processed</span>
+          </div>
+          <div>
+            <div style="font-size:11px;color:#6b8a94;margin-bottom:6px;">Pay types included:</div>
+            <div class="pay-types">
+              <span class="pill pill-teal">Basic Salary</span>
+              <span class="pill pill-teal">Bonus</span>
+            </div>
+          </div>
+          <div class="freq-card-footer">
+            <button class="btn btn-ghost btn-sm btn-full">View schedule</button>
+            <button class="btn btn-teal btn-sm btn-full" onclick="goToScreen(2)">Process payroll →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Weekly Hourly -->
+      <div class="freq-card">
+        <div class="freq-card-header">
+          <div>
+            <div class="freq-card-title">Weekly – Hourly</div>
+            <div class="freq-card-sub">Weekly · BACS</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span class="pill pill-green">Active</span>
+            <button class="btn-icon">✏ Edit</button>
+          </div>
+        </div>
+        <div class="freq-card-body">
+          <div class="stat-grid">
+            <div class="stat-box stat-box-green">
+              <div class="stat-label stat-label-green">Next Pay Day</div>
+              <div class="stat-value">02 Feb 2026</div>
+            </div>
+            <div class="stat-box stat-box-amber">
+              <div class="stat-label stat-label-amber">Approval Deadline</div>
+              <div class="stat-value">30 Jan 2026</div>
+            </div>
+          </div>
+          <div class="pay-method-row">
+            <span style="font-size:14px;">💳</span>
+            <span style="font-size:12px;color:#6b8a94;">Payment method:</span>
+            <span style="font-size:13px;font-weight:700;">BACS</span>
+          </div>
+          <div class="rota-status-row rota-locked">
+            <span>✓</span>
+            <span>Rota locked on 28 Jan 2026 at 09:14</span>
+          </div>
+          <div>
+            <div style="font-size:11px;color:#6b8a94;margin-bottom:6px;">Pay types included:</div>
+            <div class="pay-types">
+              <span class="pill pill-teal">Hourly Pay</span>
+              <span class="pill pill-teal">Shift Allowance</span>
+            </div>
+          </div>
+          <div class="freq-card-footer">
+            <button class="btn btn-ghost btn-sm btn-full">View schedule</button>
+            <button class="btn btn-ghost btn-sm btn-full" style="color:#94a3b8;cursor:not-allowed;">Process payroll →</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Annotation -->
+    <div class="annotation">
+      <div class="annotation-title">Screen 1 — State notes</div>
+      <div class="annotation-grid">
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Rota unlocked:</strong> Amber border on frequency card + warning row replaces green rota lock status. "Process payroll →" remains enabled.</span></div>
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Rota locked:</strong> Weekly card shows green lock confirmation. Process payroll button is greyed/disabled until rota is locked on the locked-rota journey.</span></div>
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Story 1 trigger:</strong> Clicking "Process payroll →" on an unlocked rota card launches the warning modal — not the payroll calculation directly.</span></div>
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>No silent processing:</strong> The system never processes silently past an unlocked rota — the warning modal is mandatory.</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     SCREEN 2 — STORY 1: ROTA WARNING MODAL
+     ════════════════════════════════════════════════════════ -->
+<div class="screen" id="screen2">
+  <div class="page">
+
+    <div class="step-indicator">
+      <div class="step-num">2</div>
+      Story 1 — Operator clicked "Process payroll →". Rota is not locked. Warning modal is presented before any calculation begins.
+    </div>
+
+    <!-- Dimmed dashboard behind modal -->
+    <div style="opacity:0.3;pointer-events:none;">
+      <div class="org-header">
+        <div class="org-header-top">
+          <div style="display:flex;align-items:center;gap:14px;">
+            <div class="org-avatar">AG</div>
+            <div><div class="org-name">The Anchor Group</div><div class="org-meta">Hospitality · 4 sites · 62 employees</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="overlay" style="position:absolute;top:0;left:0;right:0;bottom:0;">
+    <div class="modal modal-md">
+      <div class="modal-header">
+        <div>
+          <div class="modal-badge modal-badge-amber">⚠ Story 1 — Rota Override</div>
+          <div class="modal-title">Rota Not Locked — Proceed with Caution</div>
+          <div class="modal-sub">January 2026 · Monthly – Salaried · 62 employees</div>
+        </div>
+        <button class="modal-close">✕</button>
+      </div>
+      <div class="modal-body">
+
+        <div class="warning-box">
+          <div class="warning-title">⚠ The rota for this pay period has not been locked</div>
+          <div class="warning-list">
+            <div class="warning-item"><div class="warning-dot"></div><span>Hours data may not be finalised. Processing now uses the rota as it currently stands.</span></div>
+            <div class="warning-item"><div class="warning-dot"></div><span>Any rota amendments made after this run will not be included automatically in the next payroll run.</span></div>
+            <div class="warning-item"><div class="warning-dot"></div><span>When the next payroll run is initiated, a comparison against this run will be performed and any differences will be presented for your review.</span></div>
+            <div class="warning-item"><div class="warning-dot"></div><span>Your acknowledgement will be recorded against this payroll run with a Rota Locked status of No.</span></div>
+          </div>
+        </div>
+
+        <!-- Acknowledge checkbox -->
+        <div class="ack-box" id="ackBox" onclick="toggleAck()">
+          <div class="ack-check" id="ackCheck"></div>
+          <div>
+            <div class="ack-label" id="ackLabel">I understand the rota is not locked and acknowledge that any rota amendments made after this run will not be included automatically in the next payroll run</div>
+            <div style="font-size:11px;color:#92400e;margin-top:4px;" id="ackSubLabel">This acknowledgement will be recorded against your user account (Sarah Mitchell) and timestamped with Rota Locked: No.</div>
+          </div>
+        </div>
+
+        <!-- Audit preview -->
+        <div style="background:#f8fafc;border:1px solid #d0e2e8;border-radius:8px;padding:12px 14px;">
+          <div style="font-size:11px;font-weight:700;color:#6b8a94;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Payroll runs table entry that will be written on confirmation</div>
+          <div class="audit-row" style="border:none;padding:0;">
+            <div class="audit-icon audit-icon-amber">⚠</div>
+            <div>
+              <div style="font-size:12px;font-weight:700;color:#1a2e35;">Rota Override Acknowledged <span class="audit-badge">ROTA LOCKED: NO</span></div>
+              <div class="audit-meta">Sarah Mitchell · Bureau Operator · Jan 2026 Monthly Run (PAY-2026-JAN-001) · will be timestamped on confirm · Immutable once written</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="goToScreen(1)">← Cancel</button>
+        <button class="btn btn-danger" id="proceedBtn" disabled onclick="goToScreen(3)" style="opacity:0.4;cursor:not-allowed;">
+          ⚠ Acknowledge &amp; Process Payroll
         </button>
-        {srcStaged.length > 0 && <StagedList items={srcStaged} onRemove={id => setSrcStaged(p => p.filter(a => a.id !== id))} />}
-        <InfoBanner color="blue" text="Saving stores amendments and locks approval until you re-calculate. You can add more amendments before re-calculating." />
       </div>
-    </ModalShell>
-  );
+    </div>
+    </div>
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // STORY 3 — BULK POPUP
-  // ══════════════════════════════════════════════════════════════════════════
-  const BulkPopup = () => (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(13,61,79,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: 16 }}>
-      <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 24px 64px rgba(0,0,0,0.22)', width: '100%', maxWidth: 820, maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ background: S4.cardBg, borderBottom: `1px solid ${S4.border}`, borderRadius: '12px 12px 0 0', padding: '14px 20px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexShrink: 0 }}>
+    <div class="annotation" style="margin-top:420px;">
+      <div class="annotation-title">Screen 2 — Modal behaviour notes</div>
+      <div class="annotation-grid">
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Checkbox required:</strong> "Acknowledge & Process" button is disabled until the checkbox is ticked. Closing the modal returns to the dashboard without processing.</span></div>
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Audit preview:</strong> Operator can see exactly what will be written to the audit log before confirming. The entry is immutable once written.</span></div>
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Danger styling:</strong> Red confirm button signals this is a consequential action, not a routine confirmation.</span></div>
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Named user:</strong> The logged-in user is surfaced explicitly so the operator is aware their identity is being recorded.</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     SCREEN 3 — PROCESSING (CALCULATING JANUARY)
+     ════════════════════════════════════════════════════════ -->
+<div class="screen" id="screen3">
+  <div class="page">
+
+    <div class="step-indicator">
+      <div class="step-num">3</div>
+      Operator acknowledged. Payroll calculation is now running for January 2026.
+    </div>
+
+    <div class="org-header">
+      <div class="org-header-top">
+        <div style="display:flex;align-items:center;gap:14px;">
+          <div class="org-avatar">AG</div>
+          <div><div class="org-name">The Anchor Group</div><div class="org-meta">Monthly – Salaried · January 2026 · PAY-2026-JAN-001</div></div>
+        </div>
+        <span class="pill pill-amber">⏳ Calculating…</span>
+      </div>
+    </div>
+
+    <div class="modal modal-sm" style="margin:0 auto;">
+      <div class="modal-header">
+        <div>
+          <div class="modal-badge modal-badge-teal">Processing</div>
+          <div class="modal-title">Calculating January 2026 Payroll</div>
+          <div class="modal-sub">Monthly – Salaried · 62 employees</div>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="spinner-wrap">
+          <div class="spinner"></div>
+          <div style="font-weight:700;color:#1a2e35;font-size:14px;">Running payroll calculation…</div>
+        </div>
+        <div class="spinner-steps">
+          <div class="s-step s-step-done">✓ &nbsp;Audit entry written — rota override acknowledged by Sarah Mitchell</div>
+          <div class="s-step s-step-done">✓ &nbsp;Pay elements loaded for 62 employees</div>
+          <div class="s-step s-step-done">✓ &nbsp;PAYE &amp; NI calculated</div>
+          <div class="s-step s-step-done">✓ &nbsp;SSP, SMP and statutory deductions applied</div>
+          <div class="s-step s-step-active">⏳ Generating payslips…</div>
+          <div class="s-step s-step-idle">○ &nbsp;Preparing RTI FPS</div>
+          <div class="s-step s-step-idle">○ &nbsp;Marking run as complete</div>
+        </div>
+        <button class="btn btn-teal" style="width:100%;justify-content:center;margin-top:8px;" onclick="goToScreen(4)">
+          Skip to complete →
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     SCREEN 4 — JANUARY COMPLETE (STORY 1 END STATE)
+     ════════════════════════════════════════════════════════ -->
+<div class="screen" id="screen4">
+  <div class="page">
+
+    <div class="step-indicator">
+      <div class="step-num">4</div>
+      Story 1 complete. January payroll has been processed with the rota override. The audit log records the acknowledgement. Click "Process payroll →" on the frequency card to simulate February (Story 2).
+    </div>
+
+    <div class="org-header">
+      <div class="org-header-top">
+        <div style="display:flex;align-items:center;gap:14px;">
+          <div class="org-avatar">AG</div>
+          <div><div class="org-name">The Anchor Group</div><div class="org-meta">Hospitality · 4 sites · 62 employees</div></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span class="pill pill-green">✓ PAYE Configured</span>
+          <span class="pill pill-green">✓ Active</span>
+        </div>
+      </div>
+      <div class="org-header-bar">
+        <div class="paye-kv">PAYE Ref: <strong>120/A12345</strong></div>
+        <div class="paye-kv">Last run: <strong>January 2026 · Completed 28 Jan 2026</strong></div>
+        <div style="margin-left:auto;">
+          <span class="pill pill-amber">⚠ Jan run processed with unlocked rota</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Jan complete card -->
+    <div class="complete-card" style="margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div class="complete-icon">✓</div>
+        <div>
+          <div style="font-weight:700;font-size:15px;color:#065f46;">January 2026 Payroll Complete</div>
+          <div style="font-size:12px;color:#6b8a94;margin-top:3px;">Monthly – Salaried · 62 employees · Processed 28 Jan 2026 · PAY-2026-JAN-001</div>
+        </div>
+        <div style="margin-left:auto;">
+          <button class="btn btn-ghost btn-sm">View payslips</button>
+        </div>
+      </div>
+
+      <!-- Payroll runs table -->
+      <div style="border-top:1px solid #a7f3d0;padding-top:12px;">
+        <div style="font-size:11px;font-weight:700;color:#6b8a94;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Payroll Runs Table — this run</div>
+        <div style="overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;font-size:11px;">
+            <thead>
+              <tr style="background:#eef4f7;">
+                <th style="text-align:left;padding:7px 10px;color:#6b8a94;font-weight:700;border-bottom:1px solid #d0e2e8;">Run Ref</th>
+                <th style="text-align:left;padding:7px 10px;color:#6b8a94;font-weight:700;border-bottom:1px solid #d0e2e8;">Period</th>
+                <th style="text-align:left;padding:7px 10px;color:#6b8a94;font-weight:700;border-bottom:1px solid #d0e2e8;">Processed By</th>
+                <th style="text-align:left;padding:7px 10px;color:#6b8a94;font-weight:700;border-bottom:1px solid #d0e2e8;">Timestamp</th>
+                <th style="text-align:center;padding:7px 10px;color:#6b8a94;font-weight:700;border-bottom:1px solid #d0e2e8;">Rota Locked</th>
+                <th style="text-align:left;padding:7px 10px;color:#6b8a94;font-weight:700;border-bottom:1px solid #d0e2e8;">Gross</th>
+                <th style="text-align:left;padding:7px 10px;color:#6b8a94;font-weight:700;border-bottom:1px solid #d0e2e8;">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="background:#fff;">
+                <td style="padding:8px 10px;font-family:monospace;color:#1a2e35;font-weight:600;">PAY-2026-JAN-001</td>
+                <td style="padding:8px 10px;color:#1a2e35;">January 2026</td>
+                <td style="padding:8px 10px;color:#1a2e35;">Sarah Mitchell</td>
+                <td style="padding:8px 10px;color:#6b8a94;">28 Jan 2026 11:43</td>
+                <td style="padding:8px 10px;text-align:center;">
+                  <span style="background:#fee2e2;color:#dc2626;border-radius:4px;padding:2px 8px;font-weight:700;font-size:11px;">No</span>
+                </td>
+                <td style="padding:8px 10px;color:#1a2e35;">£148,320.00</td>
+                <td style="padding:8px 10px;"><span class="pill pill-green" style="font-size:10px;">Complete</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="font-size:11px;color:#6b8a94;margin-top:6px;font-style:italic;">If this run is recalculated, a new row will be inserted with the updated Rota Locked status and the existing row will be soft-deleted.</div>
+      </div>
+
+      <!-- Audit log -->
+      <div style="border-top:1px solid #a7f3d0;padding-top:12px;margin-top:4px;">
+        <div style="font-size:11px;font-weight:700;color:#6b8a94;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Audit log — this run</div>
+        <div class="audit-row">
+          <div class="audit-icon audit-icon-amber">⚠</div>
           <div>
-            <div style={{ background: '#ede9fe', color: '#7c3aed', borderRadius: 6, padding: '2px 8px', fontSize: 10, fontWeight: 700, marginBottom: 5, display: 'inline-block', textTransform: 'uppercase', letterSpacing: 0.5 }}>Bulk</div>
-            <div style={{ fontWeight: 700, color: S4.text, fontSize: 15 }}>Bulk Amendment</div>
-            {/* FIX 5 & 12: Clear instruction — tick to select, click to focus */}
-            <div style={{ fontSize: 12, color: S4.subtext, marginTop: 3 }}>
-              <strong>Tick</strong> employees to include them · <strong>Click a row</strong> to focus and fill in their amendment form
-            </div>
-          </div>
-          <button onClick={() => { setShowBulkPopup(false); resetBulk(); }} style={{ background: 'none', border: 'none', fontSize: 20, color: '#94a3b8', cursor: 'pointer', lineHeight: 1, marginLeft: 12 }}>✕</button>
-        </div>
-
-        <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-          {/* LEFT — employee list */}
-          <div style={{ width: 224, borderRight: `1px solid ${S4.border}`, display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
-            <div style={{ padding: '8px 14px', background: S4.cardBg, borderBottom: `1px solid ${S4.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: 10, fontWeight: 700, color: S4.subtext, textTransform: 'uppercase', letterSpacing: 1 }}>Employees</span>
-              {bulkIds.length > 0 && <span style={{ background: '#ede9fe', color: '#7c3aed', borderRadius: 999, padding: '1px 7px', fontSize: 10, fontWeight: 700 }}>{bulkIds.length} ticked</span>}
-            </div>
-            <div style={{ overflowY: 'auto', flex: 1 }}>
-              {EMPLOYEES.map(emp => {
-                const isSel = bulkIds.includes(emp.id);
-                const isAct = bulkActiveId === emp.id;
-                const cnt   = bulkStaged.filter(a => a.empId === emp.id).length;
-                return (
-                  // FIX 12: row click = focus only, checkbox = toggle selection
-                  <div key={emp.id} onClick={() => focusBulkRow(emp.id)}
-                    style={{ padding: '10px 12px', borderBottom: `1px solid ${S4.border}`, cursor: 'pointer', background: isAct ? '#f5f3ff' : '#fff', borderLeft: isAct ? `3px solid #7c3aed` : '3px solid transparent' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <div onClick={e => toggleBulkCheck(e, emp.id)}
-                        style={{ width: 15, height: 15, borderRadius: 3, border: `2px solid ${isSel ? '#7c3aed' : '#cbd5e1'}`, background: isSel ? '#7c3aed' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, cursor: 'pointer' }}>
-                        {isSel && <span style={{ color: '#fff', fontSize: 9, lineHeight: 1, fontWeight: 700 }}>✓</span>}
-                      </div>
-                      <Avatar emp={emp} size={26} />
-                      <div style={{ minWidth: 0 }}>
-                        <div style={{ fontSize: 12, fontWeight: 600, color: isAct ? '#5b21b6' : S4.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{emp.name}</div>
-                        <div style={{ fontSize: 10, color: S4.subtext }}>ID: {emp.id}</div>
-                      </div>
-                    </div>
-                    {cnt > 0 && <div style={{ marginTop: 5, marginLeft: 23 }}><span style={{ background: '#ede9fe', color: '#7c3aed', borderRadius: 999, padding: '1px 7px', fontSize: 10, fontWeight: 700 }}>{cnt} amendment{cnt > 1 ? 's' : ''}</span></div>}
-                  </div>
-                );
-              })}
-            </div>
-            <div style={{ padding: '8px 14px', background: S4.cardBg, borderTop: `1px solid ${S4.border}`, fontSize: 11, color: S4.subtext }}>{bulkIds.length} of {EMPLOYEES.length} ticked</div>
-          </div>
-
-          {/* RIGHT */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            {bulkActiveId ? (
-              <>
-                {/* FIX 5: Panel heading reflects all ticked employees */}
-                <div style={{ padding: '10px 16px', background: bulkIds.includes(bulkActiveId) ? '#f5f3ff' : S4.cardBg, borderBottom: `1px solid ${bulkIds.includes(bulkActiveId) ? '#ddd6fe' : S4.border}`, flexShrink: 0 }}>
-                  <div style={{ fontWeight: 700, color: '#5b21b6', fontSize: 13 }}>
-                    {bulkIds.length > 1
-                      ? `Adding amendment for ${bulkIds.length} ticked employees`
-                      : bulkIds.includes(bulkActiveId)
-                        ? `Adding amendment for ${bulkActiveEmp?.name}`
-                        : `Viewing ${bulkActiveEmp?.name} — tick to include in amendment`}
-                  </div>
-                  {/* FIX 5: Show all ticked employee avatars */}
-                  {bulkIds.length > 1 && (
-                    <div style={{ display: 'flex', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
-                      {selectedEmps.map(e => (
-                        <div key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 5, background: '#ede9fe', borderRadius: 999, padding: '2px 8px 2px 4px' }}>
-                          <Avatar emp={e} size={18} />
-                          <span style={{ fontSize: 11, color: '#5b21b6', fontWeight: 600 }}>{e.name.split(' ')[0]}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {!bulkIds.includes(bulkActiveId) && (
-                    <div style={{ fontSize: 11, color: '#7c3aed', marginTop: 4 }}>
-                      <button onClick={e => { e.stopPropagation(); toggleBulkCheck(e, bulkActiveId); }}
-                        style={{ background: '#ede9fe', border: 'none', borderRadius: 6, padding: '3px 10px', fontSize: 11, color: '#7c3aed', cursor: 'pointer', fontWeight: 600 }}>
-                        + Tick to include in amendment
-                      </button>
-                    </div>
-                  )}
-                </div>
-                {bulkIds.includes(bulkActiveId) || bulkIds.length > 0 ? (
-                  <div style={{ padding: 16, borderBottom: `1px solid ${S4.border}`, display: 'flex', flexDirection: 'column', gap: 10, flexShrink: 0 }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                      <div><FieldLabel>Pay Element *</FieldLabel><S4Select value={bulkEl} onChange={e => setBulkEl(e.target.value)}><option value="">Select...</option>{PAY_ELEMENTS.map(p => <option key={p} value={p}>{p}</option>)}</S4Select></div>
-                      <div><FieldLabel>Value *</FieldLabel><S4Input prefix="£" value={bulkVal} onChange={e => setBulkVal(e.target.value)} placeholder="0.00" /></div>
-                    </div>
-                    <div><FieldLabel>Description (optional)</FieldLabel><S4Input value={bulkDesc} onChange={e => setBulkDesc(e.target.value)} placeholder="Add a note or identifier..." /></div>
-                    <button onClick={addBulkStaged} disabled={!bulkEl || !bulkVal || bulkIds.length === 0}
-                      style={{ padding: '8px', border: `2px dashed ${bulkEl && bulkVal && bulkIds.length > 0 ? '#7c3aed' : '#e2e8f0'}`, borderRadius: 8, background: bulkEl && bulkVal && bulkIds.length > 0 ? '#f5f3ff' : 'none', color: bulkEl && bulkVal && bulkIds.length > 0 ? '#7c3aed' : '#cbd5e1', fontSize: 13, fontWeight: 600, cursor: bulkEl && bulkVal && bulkIds.length > 0 ? 'pointer' : 'not-allowed' }}>
-                      {bulkIds.length === 0 ? '← Tick at least one employee first'
-                        : bulkIds.length > 1 ? `+ Add for all ${bulkIds.length} ticked employees`
-                        : `+ Add for ${bulkActiveEmp?.name.split(' ')[0]}`}
-                    </button>
-                  </div>
-                ) : null}
-              </>
-            ) : (
-              <div style={{ padding: 18, borderBottom: `1px solid ${S4.border}`, background: S4.cardBg, display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-                <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: 16 }}>≡</div>
-                <div style={{ fontSize: 13, color: S4.subtext }}>Click an employee row on the left to start adding amendments</div>
-              </div>
-            )}
-            <div style={{ flex: 1, overflowY: 'auto', padding: 16 }}>
-              {bulkStaged.length > 0
-                ? <StagedList items={bulkStaged} onRemove={id => setBulkStaged(p => p.filter(a => a.id !== id))} groupByEmp />
-                : <div style={{ textAlign: 'center', color: '#94a3b8', fontSize: 13, paddingTop: 40 }}>No amendments staged yet</div>}
-            </div>
+            <div style="font-size:12px;font-weight:700;color:#1a2e35;">Rota Override Acknowledged <span class="audit-badge">ROTA LOCKED: NO</span></div>
+            <div class="audit-meta">Sarah Mitchell · Bureau Operator · 28 Jan 2026 at 11:42 · PAY-2026-JAN-001 · Immutable</div>
           </div>
         </div>
-
-        <div style={{ borderTop: `1px solid ${S4.border}`, background: S4.cardBg, borderRadius: '0 0 12px 12px', padding: '12px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-          <InfoBanner color="blue" text="Saving locks approval until payroll is re-calculated. You can still add more amendments afterwards." />
-          <div style={{ display: 'flex', gap: 10, marginLeft: 16 }}>
-            <TealBtn outline onClick={() => { setShowBulkPopup(false); resetBulk(); }}>Cancel</TealBtn>
-            <TealBtn disabled={bulkStaged.length === 0} onClick={saveBulk}>Save All ({bulkStaged.length})</TealBtn>
+        <div class="audit-row">
+          <div class="audit-icon audit-icon-green">✓</div>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:#1a2e35;">Payroll Calculated</div>
+            <div class="audit-meta">System · 28 Jan 2026 at 11:43 · 62 employees · Gross: £148,320.00</div>
+          </div>
+        </div>
+        <div class="audit-row" style="border:none;">
+          <div class="audit-icon audit-icon-teal">📄</div>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:#1a2e35;">RTI FPS Submitted</div>
+            <div class="audit-meta">System · 28 Jan 2026 at 11:44 · HMRC reference: FPS-2026-001</div>
           </div>
         </div>
       </div>
     </div>
-  );
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // STORY 4 — ROTA CONFIRM
-  // ══════════════════════════════════════════════════════════════════════════
-  const RotaConfirm = () => (
-    <ModalShell badge="Rota Hours" badgeColor="#16a34a" title="Navigate to S4 Rota?" onClose={() => setShowRotaConfirm(false)}
-      footer={<div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}><TealBtn outline onClick={() => setShowRotaConfirm(false)}>Cancel</TealBtn><TealBtn onClick={() => setShowRotaConfirm(false)}>Go to S4 Rota →</TealBtn></div>}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <InfoBanner color="amber" text="You will leave this payroll screen. Any unsaved changes will be lost. After amending hours in S4 Rota, return to this payroll and re-calculate to apply changes." />
-        <div style={{ background: S4.cardBg, border: `1px solid ${S4.border}`, borderRadius: 10, padding: 14 }}>
-          <div style={{ fontWeight: 700, color: S4.text, fontSize: 13, marginBottom: 10 }}>Steps after amending hours:</div>
-          {['Make your hours amendments in S4 Rota','Return to S4 Pay → Payroll Processing','Re-calculate to apply the updated hours'].map((s, i) => (
-            <div key={i} style={{ display: 'flex', gap: 8, fontSize: 13, color: S4.subtext, marginBottom: 6 }}><span style={{ color: '#94a3b8', width: 16, flexShrink: 0 }}>{i + 1}.</span><span>{s}</span></div>
-          ))}
-        </div>
-        <InfoBanner color="blue" text="Note: Write-back from Rota must not conflict with existing rota records. Conflict handling rules apply — see Rota team documentation." />
+    <!-- Frequency cards — February -->
+    <div class="section-head">
+      <div>
+        <div class="section-title">Pay Frequencies</div>
+        <div class="section-sub">February run is now the upcoming period.</div>
       </div>
-    </ModalShell>
-  );
+    </div>
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // ROW AMEND MODAL — FIX 4: show context note, all options always available
-  // ══════════════════════════════════════════════════════════════════════════
-  const RowModal = () => {
-    if (!rowEmp) return null;
-    const enterAmendAndOpen = (fn) => {
-      if (!isAmendMode && !isRerunRequired) setStatus('Amend Payroll');
-      fn();
-    };
-    return (
-      <ModalShell title={rowEmp.name} subtitle={`EMP-${rowEmp.id} · Select an action`} onClose={() => setShowRowModal(false)}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {/* FIX 4: Context note — not alarming, just informative */}
-          {!isAmendMode && !isRerunRequired && (
-            <InfoBanner color="blue" text="Selecting an amendment type below will automatically enter Amend mode for this payroll." />
-          )}
-          {[
-            { iconBg: '#dbeafe', icon: '✏', iconColor: '#2563eb', label: 'Source Data Amendment', desc: 'Amend a pay element for this employee — value and optional description.', onClick: () => enterAmendAndOpen(() => { setSrcEmp(rowEmp.id); setShowRowModal(false); setShowSourcePopup(true); }) },
-            { iconBg: '#ede9fe', icon: '≡', iconColor: '#7c3aed', label: 'Bulk Amendment', desc: 'Open the bulk panel with this employee pre-selected.', onClick: () => enterAmendAndOpen(() => { setBulkIds([rowEmp.id]); setBulkActiveId(rowEmp.id); setShowRowModal(false); setShowBulkPopup(true); }) },
-            { iconBg: '#dcfce7', icon: '→', iconColor: '#16a34a', label: 'Rota (Hours) Amendment', desc: 'Navigate to S4 Rota to amend hours for this employee.', warn: '⚠ You will leave this screen', onClick: () => enterAmendAndOpen(() => { setShowRowModal(false); setShowRotaConfirm(true); }) },
-          ].map(opt => (
-            <button key={opt.label} onClick={opt.onClick}
-              style={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: 14, background: '#fff', border: `2px solid ${S4.border}`, borderRadius: 10, cursor: 'pointer', textAlign: 'left' }}>
-              <div style={{ width: 36, height: 36, background: opt.iconBg, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: opt.iconColor, fontSize: 16, fontWeight: 700 }}>{opt.icon}</div>
-              <div>
-                <div style={{ fontWeight: 700, color: S4.text, fontSize: 13 }}>{opt.label}</div>
-                <div style={{ fontSize: 12, color: S4.subtext, marginTop: 3 }}>{opt.desc}</div>
-                {opt.warn && <div style={{ fontSize: 11, color: S4.red, marginTop: 4, fontWeight: 600 }}>{opt.warn}</div>}
-              </div>
-            </button>
-          ))}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '4px 0' }}>
-            <div style={{ flex: 1, borderTop: `1px solid ${S4.border}` }}></div>
-            <span style={{ fontSize: 12, color: '#94a3b8' }}>or</span>
-            <div style={{ flex: 1, borderTop: `1px solid ${S4.border}` }}></div>
+    <div class="freq-grid">
+      <div class="freq-card">
+        <div class="freq-card-header">
+          <div>
+            <div class="freq-card-title">Monthly – Salaried</div>
+            <div class="freq-card-sub">Monthly · BACS</div>
           </div>
-          <button onClick={() => { setProfileEmp(rowEmp); setShowRowModal(false); setShowProfile(true); }}
-            style={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: 14, background: '#fff', border: `2px solid ${S4.border}`, borderRadius: 10, cursor: 'pointer', textAlign: 'left' }}>
-            <div style={{ width: 36, height: 36, background: S4.cardBg, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 16 }}>👤</div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span class="pill pill-green">Active</span>
+          </div>
+        </div>
+        <div class="freq-card-body">
+          <div class="stat-grid">
+            <div class="stat-box stat-box-green">
+              <div class="stat-label stat-label-green">Next Pay Day</div>
+              <div class="stat-value">28 Feb 2026</div>
+            </div>
+            <div class="stat-box stat-box-amber">
+              <div class="stat-label stat-label-amber">Approval Deadline</div>
+              <div class="stat-value">24 Feb 2026</div>
+            </div>
+          </div>
+          <div class="rota-status-row rota-locked">
+            <span>✓</span>
+            <span>Rota locked on 20 Feb 2026 at 14:30</span>
+          </div>
+          <div class="banner banner-amber" style="font-size:11px;">
+            <span>⚠</span>
+            <span><strong>Previous run (January)</strong> was processed with an unlocked rota. A comparison will run automatically when February is initiated.</span>
+          </div>
+          <div class="freq-card-footer">
+            <button class="btn btn-ghost btn-sm btn-full">View schedule</button>
+            <button class="btn btn-teal btn-sm btn-full" onclick="goToScreen(5)">Process payroll →</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="freq-card">
+        <div class="freq-card-header">
+          <div><div class="freq-card-title">Weekly – Hourly</div><div class="freq-card-sub">Weekly · BACS</div></div>
+          <div><span class="pill pill-green">Active</span></div>
+        </div>
+        <div class="freq-card-body">
+          <div class="stat-grid">
+            <div class="stat-box stat-box-green"><div class="stat-label stat-label-green">Next Pay Day</div><div class="stat-value">02 Feb 2026</div></div>
+            <div class="stat-box stat-box-amber"><div class="stat-label stat-label-amber">Approval Deadline</div><div class="stat-value">30 Jan 2026</div></div>
+          </div>
+          <div class="rota-status-row rota-locked"><span>✓</span><span>Rota locked</span></div>
+          <div class="freq-card-footer">
+            <button class="btn btn-ghost btn-sm btn-full">View schedule</button>
+            <button class="btn btn-teal btn-sm btn-full">Process payroll →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="annotation">
+      <div class="annotation-title">Screen 4 — Story 1 end state notes</div>
+      <div class="annotation-grid">
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Audit log visible:</strong> Rota override entry is permanently displayed on the completed run, flagged distinctly from standard events.</span></div>
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>February warning banner:</strong> The frequency card proactively informs the operator that a comparison will run when February is initiated.</span></div>
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Rota locked for Feb:</strong> The rota was locked before February was initiated — this is independent of January's override.</span></div>
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Story 2 trigger:</strong> Clicking "Process payroll →" for February initiates the comparison silently before the run opens.</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     SCREEN 5 — STORY 2: COMPARISON MODAL (APPROVE/REJECT)
+     ════════════════════════════════════════════════════════ -->
+<div class="screen" id="screen5">
+  <div class="page">
+
+    <div class="step-indicator">
+      <div class="step-num">5</div>
+      Story 2 — February payroll initiated. System detected January was processed with an unlocked rota. Comparison found 8 differences between what was submitted in the January run and current January rota data. Operator reviews each difference and approves or rejects individually. Illustrated end state: 5 approved, 3 rejected.
+    </div>
+
+    <div style="opacity:0.25;pointer-events:none;margin-bottom:8px;">
+      <div class="org-header"><div class="org-header-top"><div style="display:flex;align-items:center;gap:14px;"><div class="org-avatar">AG</div><div><div class="org-name">The Anchor Group</div></div></div></div></div>
+    </div>
+
+    <div class="overlay" style="position:absolute;top:0;left:0;right:0;bottom:0;">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <div>
+          <div class="modal-badge modal-badge-blue">Story 2 — Pay Run Comparison</div>
+          <div class="modal-title">Pay Element Differences Found — January Run vs Current January Data</div>
+          <div class="modal-sub">8 differences identified · January was processed with an unlocked rota · Values below compare what was submitted against current January rota data</div>
+        </div>
+        <button class="modal-close" onclick="goToScreen(6)">✕</button>
+      </div>
+      <div class="modal-body">
+
+        <div class="banner banner-blue">
+          <span>ℹ</span>
+          <span>The system has compared pay elements against the previous run. <strong>Approve</strong> a difference to apply it as an adjustment in this run. <strong>Reject</strong> to exclude it. Dismissing this modal rejects all differences — the run will proceed without adjustment or recalculation.</span>
+        </div>
+
+        <!-- Live selection counter -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;background:#f8fafc;border-radius:8px;padding:12px;border:1px solid #d0e2e8;">
+          <div style="text-align:center;">
+            <div style="font-size:11px;color:#6b8a94;">Differences found</div>
+            <div style="font-size:18px;font-weight:800;color:#1a2e35;">8</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:11px;color:#6b8a94;">Approved for application</div>
+            <div style="font-size:18px;font-weight:800;color:#059669;" id="approvedCount">5</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:11px;color:#6b8a94;">Rejected</div>
+            <div style="font-size:18px;font-weight:800;color:#dc2626;" id="rejectedCount">3</div>
+          </div>
+        </div>
+
+        <!-- Differences table with per-row approve/reject -->
+        <table class="diff-table">
+          <thead>
+            <tr>
+              <th>Employee</th>
+              <th>Pay Element</th>
+              <th>Jan run (submitted)</th>
+              <th>Jan rota (current)</th>
+              <th>Delta</th>
+              <th>Type</th>
+              <th style="text-align:center;">Decision</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Row 1: Kevin Hart — Approved -->
+            <tr id="row-kh">
+              <td><div class="emp-cell"><div class="emp-av" style="background:#0891b2;">KH</div>Kevin Hart</div></td>
+              <td>Hourly Pay</td><td>£1,820.00</td><td>£2,184.00</td>
+              <td class="delta-pos">+£364.00</td>
+              <td><span class="pill pill-green" style="font-size:10px;">Addition</span></td>
+              <td style="text-align:center;">
+                <div style="display:flex;gap:4px;justify-content:center;">
+                  <button class="decision-btn approve-btn active-approve" onclick="setDecision('kh','approve')">✓ Approve</button>
+                  <button class="decision-btn reject-btn" onclick="setDecision('kh','reject')">✕ Reject</button>
+                </div>
+              </td>
+            </tr>
+            <!-- Row 2: Sarah Williams — Approved -->
+            <tr id="row-sw">
+              <td><div class="emp-cell"><div class="emp-av" style="background:#7c3aed;">SW</div>Sarah Williams</div></td>
+              <td>Shift Allowance</td><td>£0.00</td><td>£150.00</td>
+              <td class="delta-pos">+£150.00</td>
+              <td><span class="pill pill-green" style="font-size:10px;">New element</span></td>
+              <td style="text-align:center;">
+                <div style="display:flex;gap:4px;justify-content:center;">
+                  <button class="decision-btn approve-btn active-approve" onclick="setDecision('sw','approve')">✓ Approve</button>
+                  <button class="decision-btn reject-btn" onclick="setDecision('sw','reject')">✕ Reject</button>
+                </div>
+              </td>
+            </tr>
+            <!-- Row 3: Tom Baker — Rejected -->
+            <tr id="row-tb" style="opacity:0.55;">
+              <td><div class="emp-cell"><div class="emp-av" style="background:#d97706;">TB</div>Tom Baker</div></td>
+              <td>Overtime</td><td>£420.00</td><td>£0.00</td>
+              <td class="delta-neg">−£420.00</td>
+              <td><span class="pill pill-red" style="font-size:10px;">Removed</span></td>
+              <td style="text-align:center;">
+                <div style="display:flex;gap:4px;justify-content:center;">
+                  <button class="decision-btn approve-btn" onclick="setDecision('tb','approve')">✓ Approve</button>
+                  <button class="decision-btn reject-btn active-reject" onclick="setDecision('tb','reject')">✕ Reject</button>
+                </div>
+              </td>
+            </tr>
+            <!-- Row 4: James Davies — Approved -->
+            <tr id="row-jd">
+              <td><div class="emp-cell"><div class="emp-av" style="background:#16a34a;">JD</div>James Davies</div></td>
+              <td>Hourly Pay</td><td>£1,560.00</td><td>£1,716.00</td>
+              <td class="delta-pos">+£156.00</td>
+              <td><span class="pill pill-green" style="font-size:10px;">Addition</span></td>
+              <td style="text-align:center;">
+                <div style="display:flex;gap:4px;justify-content:center;">
+                  <button class="decision-btn approve-btn active-approve" onclick="setDecision('jd','approve')">✓ Approve</button>
+                  <button class="decision-btn reject-btn" onclick="setDecision('jd','reject')">✕ Reject</button>
+                </div>
+              </td>
+            </tr>
+            <!-- Row 5: Emma Patel — Rejected -->
+            <tr id="row-ep" style="opacity:0.55;">
+              <td><div class="emp-cell"><div class="emp-av" style="background:#be185d;">EP</div>Emma Patel</div></td>
+              <td>Bonus</td><td>£500.00</td><td>£0.00</td>
+              <td class="delta-neg">−£500.00</td>
+              <td><span class="pill pill-red" style="font-size:10px;">Removed</span></td>
+              <td style="text-align:center;">
+                <div style="display:flex;gap:4px;justify-content:center;">
+                  <button class="decision-btn approve-btn" onclick="setDecision('ep','approve')">✓ Approve</button>
+                  <button class="decision-btn reject-btn active-reject" onclick="setDecision('ep','reject')">✕ Reject</button>
+                </div>
+              </td>
+            </tr>
+            <!-- Row 6: Rachel Nguyen — Approved -->
+            <tr id="row-rn">
+              <td><div class="emp-cell"><div class="emp-av" style="background:#0d9488;">RN</div>Rachel Nguyen</div></td>
+              <td>Hourly Pay</td><td>£1,440.00</td><td>£1,584.00</td>
+              <td class="delta-pos">+£144.00</td>
+              <td><span class="pill pill-green" style="font-size:10px;">Addition</span></td>
+              <td style="text-align:center;">
+                <div style="display:flex;gap:4px;justify-content:center;">
+                  <button class="decision-btn approve-btn active-approve" onclick="setDecision('rn','approve')">✓ Approve</button>
+                  <button class="decision-btn reject-btn" onclick="setDecision('rn','reject')">✕ Reject</button>
+                </div>
+              </td>
+            </tr>
+            <!-- Row 7: Mohammed Omar — Approved -->
+            <tr id="row-mo">
+              <td><div class="emp-cell"><div class="emp-av" style="background:#7c3aed;">MO</div>Mohammed Omar</div></td>
+              <td>Night Premium</td><td>£0.00</td><td>£220.00</td>
+              <td class="delta-pos">+£220.00</td>
+              <td><span class="pill pill-green" style="font-size:10px;">New element</span></td>
+              <td style="text-align:center;">
+                <div style="display:flex;gap:4px;justify-content:center;">
+                  <button class="decision-btn approve-btn active-approve" onclick="setDecision('mo','approve')">✓ Approve</button>
+                  <button class="decision-btn reject-btn" onclick="setDecision('mo','reject')">✕ Reject</button>
+                </div>
+              </td>
+            </tr>
+            <!-- Row 8: Laura Chen — Rejected -->
+            <tr id="row-lc" style="opacity:0.55;">
+              <td><div class="emp-cell"><div class="emp-av" style="background:#b45309;">LC</div>Laura Chen</div></td>
+              <td>Shift Allowance</td><td>£180.00</td><td>£90.00</td>
+              <td class="delta-neg">−£90.00</td>
+              <td><span class="pill pill-amber" style="font-size:10px;">Changed</span></td>
+              <td style="text-align:center;">
+                <div style="display:flex;gap:4px;justify-content:center;">
+                  <button class="decision-btn approve-btn" onclick="setDecision('lc','approve')">✓ Approve</button>
+                  <button class="decision-btn reject-btn active-reject" onclick="setDecision('lc','reject')">✕ Reject</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+      </div>
+      <div class="modal-footer" style="justify-content:space-between;">
+        <button class="btn btn-outline" onclick="goToScreen(6)">Dismiss — proceed without adjustments</button>
+        <button class="btn btn-teal" id="confirmSelectionBtn" onclick="goToScreen(6)">Apply 5 approved &amp; recalculate →</button>
+      </div>
+    </div>
+    </div>
+
+    <div class="annotation" style="margin-top:620px;">
+      <div class="annotation-title">Screen 5 — Comparison modal notes</div>
+      <div class="annotation-grid">
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Per-row decision:</strong> Each difference has its own Approve / Reject toggle. The illustrated state shows 5 approved and 3 rejected — operators are not forced to apply all or nothing.</span></div>
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Live counter:</strong> The summary bar updates as decisions change, showing the current approved and rejected counts at a glance.</span></div>
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Recalculation only on confirm:</strong> Clicking "Apply approved &amp; recalculate" applies only approved differences as adjustments, then recalculates the run before presenting it for approval.</span></div>
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Dismiss path:</strong> Closing or clicking "Dismiss" rejects all differences. The run proceeds to approval without any adjustments or recalculation.</span></div>
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Outcome recorded:</strong> The comparison result, each decision (approved/rejected), and any applied adjustments are recorded against this run regardless of path taken.</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     SCREEN 6 — PAYROLL RUN SUMMARY (EMPLOYEE LINE VIEW)
+     ════════════════════════════════════════════════════════ -->
+<div class="screen" id="screen6">
+  <div class="page">
+
+    <div class="step-indicator">
+      <div class="step-num">6</div>
+      February payroll run summary. Operator approved 5 of 8 differences — those 5 are applied as amendments on each employee's line. 3 rejected differences are not present. Click "View payslip →" on Kevin Hart to see payslip representation.
+    </div>
+
+    <!-- Run header -->
+    <div class="org-header">
+      <div class="org-header-top">
+        <div style="display:flex;align-items:center;gap:14px;">
+          <div class="org-avatar">AG</div>
+          <div>
+            <div class="org-name">February 2026 — Monthly Salaried</div>
+            <div class="org-meta">The Anchor Group · 62 employees · PAY-2026-FEB-001 · Pay date: 28 Feb 2026</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span class="pill pill-teal">⏳ Awaiting Approval</span>
+          <button class="btn btn-teal btn-sm" onclick="approveFeb()">Approve payroll ✓</button>
+        </div>
+      </div>
+      <div class="org-header-bar">
+        <div class="paye-kv">Gross: <strong>£149,354.00</strong></div>
+        <div class="paye-kv">PAYE: <strong>£29,870.80</strong></div>
+        <div class="paye-kv">Employee NI: <strong>£10,455.78</strong></div>
+        <div class="paye-kv">Employer NI: <strong>£22,403.10</strong></div>
+        <div class="paye-kv">Net pay: <strong>£109,027.42</strong></div>
+        <div style="margin-left:auto;">
+          <span class="pill pill-green" style="font-size:11px;">✓ 5 of 8 rota adjustments applied</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Amendment banner -->
+    <div class="banner banner-green" style="margin-bottom:14px;">
+      <span>✓</span>
+      <span><strong>5 of 8 rota adjustments were approved and applied as amendments to this run.</strong> 3 differences were rejected and are not included. Applied adjustments appear on each employee's line below and are labelled "Adjustment — January 2026" on their payslip.</span>
+    </div>
+
+    <!-- Employee table -->
+    <div style="background:#fff;border:1px solid #d0e2e8;border-radius:12px;overflow:hidden;">
+      <div style="padding:12px 16px;background:#eef4f7;border-bottom:1px solid #d0e2e8;display:flex;justify-content:space-between;align-items:center;">
+        <div style="font-size:13px;font-weight:700;color:#1a2e35;">Employee Pay Summary</div>
+        <div style="font-size:11px;color:#6b8a94;">62 employees · Showing 6 for illustration</div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <thead>
+          <tr style="background:#f8fafc;">
+            <th style="text-align:left;padding:9px 14px;color:#6b8a94;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.4px;border-bottom:1px solid #d0e2e8;">Employee</th>
+            <th style="text-align:right;padding:9px 14px;color:#6b8a94;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.4px;border-bottom:1px solid #d0e2e8;">Basic Pay</th>
+            <th style="text-align:right;padding:9px 14px;color:#6b8a94;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.4px;border-bottom:1px solid #d0e2e8;">Other Elements</th>
+            <th style="text-align:right;padding:9px 14px;color:#6b8a94;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.4px;border-bottom:1px solid #d0e2e8;">Amendment</th>
+            <th style="text-align:right;padding:9px 14px;color:#6b8a94;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.4px;border-bottom:1px solid #d0e2e8;">Gross</th>
+            <th style="text-align:right;padding:9px 14px;color:#6b8a94;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.4px;border-bottom:1px solid #d0e2e8;">Net Pay</th>
+            <th style="padding:9px 14px;border-bottom:1px solid #d0e2e8;"></th>
+          </tr>
+        </thead>
+        <tbody>
+
+          <!-- Kevin Hart — has amendment -->
+          <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:10px 14px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:30px;height:30px;border-radius:50%;background:#0891b2;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;">KH</div>
+                <div>
+                  <div style="font-weight:700;color:#1a2e35;">Kevin Hart</div>
+                  <div style="font-size:11px;color:#6b8a94;">EMP-1042 · Hourly</div>
+                </div>
+              </div>
+            </td>
+            <td style="text-align:right;padding:10px 14px;color:#1a2e35;font-weight:600;">£2,184.00</td>
+            <td style="text-align:right;padding:10px 14px;color:#6b8a94;">—</td>
+            <td style="text-align:right;padding:10px 14px;">
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">
+                <span style="background:#d1fae5;color:#059669;border-radius:999px;padding:2px 8px;font-size:10px;font-weight:700;">+£364.00</span>
+                <span style="font-size:10px;color:#6b8a94;">Adj — Jan 2026</span>
+              </div>
+            </td>
+            <td style="text-align:right;padding:10px 14px;font-weight:800;color:#1a2e35;">£2,548.00</td>
+            <td style="text-align:right;padding:10px 14px;font-weight:700;color:#059669;">£2,061.47</td>
+            <td style="padding:10px 14px;text-align:right;"><button class="btn btn-ghost btn-sm" onclick="goToScreen(7)">View payslip →</button></td>
+          </tr>
+
+          <!-- Sarah Williams — has amendment -->
+          <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:10px 14px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:30px;height:30px;border-radius:50%;background:#7c3aed;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;">SW</div>
+                <div>
+                  <div style="font-weight:700;color:#1a2e35;">Sarah Williams</div>
+                  <div style="font-size:11px;color:#6b8a94;">EMP-1043 · Salaried</div>
+                </div>
+              </div>
+            </td>
+            <td style="text-align:right;padding:10px 14px;color:#1a2e35;font-weight:600;">£2,800.00</td>
+            <td style="text-align:right;padding:10px 14px;color:#6b8a94;">—</td>
+            <td style="text-align:right;padding:10px 14px;">
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">
+                <span style="background:#d1fae5;color:#059669;border-radius:999px;padding:2px 8px;font-size:10px;font-weight:700;">+£150.00</span>
+                <span style="font-size:10px;color:#6b8a94;">Adj — Jan 2026</span>
+              </div>
+            </td>
+            <td style="text-align:right;padding:10px 14px;font-weight:800;color:#1a2e35;">£2,950.00</td>
+            <td style="text-align:right;padding:10px 14px;font-weight:700;color:#059669;">£2,347.20</td>
+            <td style="padding:10px 14px;text-align:right;"><button class="btn btn-ghost btn-sm">View payslip →</button></td>
+          </tr>
+
+          <!-- Tom Baker — no amendment (difference rejected) -->
+          <tr style="border-bottom:1px solid #f1f5f9;background:#fafcfd;">
+            <td style="padding:10px 14px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:30px;height:30px;border-radius:50%;background:#d97706;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;">TB</div>
+                <div>
+                  <div style="font-weight:700;color:#1a2e35;">Tom Baker</div>
+                  <div style="font-size:11px;color:#6b8a94;">EMP-1044 · Hourly</div>
+                </div>
+              </div>
+            </td>
+            <td style="text-align:right;padding:10px 14px;color:#1a2e35;font-weight:600;">£1,960.00</td>
+            <td style="text-align:right;padding:10px 14px;color:#6b8a94;">—</td>
+            <td style="text-align:right;padding:10px 14px;color:#d0e2e8;font-size:11px;">—</td>
+            <td style="text-align:right;padding:10px 14px;font-weight:800;color:#1a2e35;">£1,960.00</td>
+            <td style="text-align:right;padding:10px 14px;font-weight:700;color:#059669;">£1,588.80</td>
+            <td style="padding:10px 14px;text-align:right;"><button class="btn btn-ghost btn-sm">View payslip →</button></td>
+          </tr>
+
+          <!-- James Davies — has amendment -->
+          <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:10px 14px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:30px;height:30px;border-radius:50%;background:#16a34a;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;">JD</div>
+                <div>
+                  <div style="font-weight:700;color:#1a2e35;">James Davies</div>
+                  <div style="font-size:11px;color:#6b8a94;">EMP-1045 · Hourly</div>
+                </div>
+              </div>
+            </td>
+            <td style="text-align:right;padding:10px 14px;color:#1a2e35;font-weight:600;">£1,716.00</td>
+            <td style="text-align:right;padding:10px 14px;color:#6b8a94;">—</td>
+            <td style="text-align:right;padding:10px 14px;">
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">
+                <span style="background:#d1fae5;color:#059669;border-radius:999px;padding:2px 8px;font-size:10px;font-weight:700;">+£156.00</span>
+                <span style="font-size:10px;color:#6b8a94;">Adj — Jan 2026</span>
+              </div>
+            </td>
+            <td style="text-align:right;padding:10px 14px;font-weight:800;color:#1a2e35;">£1,872.00</td>
+            <td style="text-align:right;padding:10px 14px;font-weight:700;color:#059669;">£1,521.60</td>
+            <td style="padding:10px 14px;text-align:right;"><button class="btn btn-ghost btn-sm">View payslip →</button></td>
+          </tr>
+
+          <!-- Anna Clarke — no amendment, standard employee -->
+          <tr style="border-bottom:1px solid #f1f5f9;background:#fafcfd;">
+            <td style="padding:10px 14px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:30px;height:30px;border-radius:50%;background:#6b8a94;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;">AC</div>
+                <div>
+                  <div style="font-weight:700;color:#1a2e35;">Anna Clarke</div>
+                  <div style="font-size:11px;color:#6b8a94;">EMP-1046 · Salaried</div>
+                </div>
+              </div>
+            </td>
+            <td style="text-align:right;padding:10px 14px;color:#1a2e35;font-weight:600;">£3,200.00</td>
+            <td style="text-align:right;padding:10px 14px;color:#6b8a94;">—</td>
+            <td style="text-align:right;padding:10px 14px;color:#d0e2e8;font-size:11px;">—</td>
+            <td style="text-align:right;padding:10px 14px;font-weight:800;color:#1a2e35;">£3,200.00</td>
+            <td style="text-align:right;padding:10px 14px;font-weight:700;color:#059669;">£2,547.20</td>
+            <td style="padding:10px 14px;text-align:right;"><button class="btn btn-ghost btn-sm">View payslip →</button></td>
+          </tr>
+
+          <!-- Emma Patel — no amendment (difference rejected) -->
+          <tr style="background:#fafcfd;">
+            <td style="padding:10px 14px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:30px;height:30px;border-radius:50%;background:#be185d;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;">EP</div>
+                <div>
+                  <div style="font-weight:700;color:#1a2e35;">Emma Patel</div>
+                  <div style="font-size:11px;color:#6b8a94;">EMP-1047 · Salaried</div>
+                </div>
+              </div>
+            </td>
+            <td style="text-align:right;padding:10px 14px;color:#1a2e35;font-weight:600;">£2,600.00</td>
+            <td style="text-align:right;padding:10px 14px;color:#6b8a94;">—</td>
+            <td style="text-align:right;padding:10px 14px;color:#d0e2e8;font-size:11px;">—</td>
+            <td style="text-align:right;padding:10px 14px;font-weight:800;color:#1a2e35;">£2,600.00</td>
+            <td style="text-align:right;padding:10px 14px;font-weight:700;color:#059669;">£2,098.40</td>
+            <td style="padding:10px 14px;text-align:right;"><button class="btn btn-ghost btn-sm">View payslip →</button></td>
+          </tr>
+
+        </tbody>
+      </table>
+      <div style="padding:10px 14px;background:#f8fafc;border-top:1px solid #d0e2e8;font-size:11px;color:#6b8a94;text-align:center;">
+        Showing 6 of 62 employees · 5 of 8 rota adjustment differences approved and applied this period · 3 rejected (Tom Baker, Emma Patel, Laura Chen)
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end;">
+      <button class="btn btn-outline" onclick="goToScreen(1)">↩ Reset journey</button>
+    </div>
+
+    <div class="annotation">
+      <div class="annotation-title">Screen 6 — Payroll summary notes</div>
+      <div class="annotation-grid">
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Amendment column — approved only:</strong> Only employees whose differences were approved show an amendment. Tom Baker, Emma Patel and Laura Chen's differences were rejected, so their rows show a dash — their February pay is unaffected by the comparison.</span></div>
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Label on the row:</strong> "Adj — Jan 2026" beneath the amount communicates which period the adjustment relates to without opening the payslip.</span></div>
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Gross reflects approved adjustments only:</strong> February gross is £148,320 + £1,034 (approved net) = £149,354. Rejected differences have no effect on gross or net pay.</span></div>
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>All decisions recorded:</strong> The comparison result, each individual approve/reject decision, and the applied adjustments are recorded internally against this run for audit purposes, regardless of what was approved or rejected.</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     SCREEN 7 — PAYSLIP VIEW (KEVIN HART)
+     ════════════════════════════════════════════════════════ -->
+<div class="screen" id="screen7">
+  <div class="page">
+
+    <div class="step-indicator">
+      <div class="step-num">7</div>
+      Kevin Hart's February 2026 payslip. The rota adjustment appears as a distinct pay element labelled "Adjustment — January 2026".
+    </div>
+
+    <div style="max-width:580px;margin:0 auto;">
+
+      <!-- Payslip card -->
+      <div style="background:#fff;border:1px solid #d0e2e8;border-radius:12px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.06);">
+
+        <!-- Payslip header -->
+        <div style="background:#0d3d4f;padding:20px 24px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
             <div>
-              <div style={{ fontWeight: 700, color: S4.text, fontSize: 13 }}>Go to Employee Profile</div>
-              <div style={{ fontSize: 12, color: S4.subtext, marginTop: 3 }}>View payroll tab — add deductions and Attachment of Earnings Orders (AOEs).</div>
+              <div style="color:#94c5cf;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Payslip</div>
+              <div style="color:#fff;font-size:18px;font-weight:800;margin-top:4px;">Kevin Hart</div>
+              <div style="color:#94c5cf;font-size:12px;margin-top:2px;">EMP-1042 · Hourly · The Anchor Group</div>
             </div>
-          </button>
-        </div>
-      </ModalShell>
-    );
-  };
-
-  // ══════════════════════════════════════════════════════════════════════════
-  // EMPLOYEE PROFILE MODAL
-  // ══════════════════════════════════════════════════════════════════════════
-  const ProfileModal = () => {
-    if (!profileEmp) return null;
-    const emp = profileEmp;
-    return (
-      <div style={{ position: 'fixed', inset: 0, background: 'rgba(13,61,79,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 300, padding: 16, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
-        <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 24px 64px rgba(0,0,0,0.28)', width: '100%', maxWidth: 900, maxHeight: '92vh', display: 'flex', flexDirection: 'column', position: 'relative' }}>
-
-          {/* Toast */}
-          {dedToast && (
-            <div style={{ position: 'absolute', top: 16, right: 56, background: '#fff', border: '1px solid #6ee7b7', borderRadius: 10, padding: '10px 16px', boxShadow: '0 4px 20px rgba(0,0,0,0.12)', display: 'flex', gap: 10, zIndex: 10, minWidth: 270 }}>
-              <span style={{ color: S4.green }}>✓</span>
-              <div><div style={{ fontWeight: 700, fontSize: 13, color: S4.text }}>Deduction added</div><div style={{ fontSize: 11, color: S4.subtext, marginTop: 2 }}>{emp.name} — pending re-calculate to apply</div></div>
+            <div style="text-align:right;">
+              <div style="color:#94c5cf;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Pay Period</div>
+              <div style="color:#fff;font-size:14px;font-weight:700;margin-top:4px;">February 2026</div>
+              <div style="color:#94c5cf;font-size:11px;margin-top:2px;">Pay date: 28 Feb 2026</div>
             </div>
-          )}
-
-          {/* Dark teal header */}
-          <div style={{ background: S4.darkTeal, borderRadius: '12px 12px 0 0', padding: '16px 22px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-              <div style={{ width: 52, height: 52, borderRadius: '50%', background: emp.color, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 18, flexShrink: 0 }}>{emp.initials}</div>
-              <div>
-                <div style={{ color: '#fff', fontWeight: 700, fontSize: 18 }}>{emp.name}</div>
-                <div style={{ color: '#94c5cf', fontSize: 12, marginTop: 2 }}>Known as: {emp.name.split(' ')[0]}</div>
-              </div>
-              <div style={{ marginLeft: 20 }}><div style={{ color: '#94c5cf', fontSize: 11 }}>Job role:</div><div style={{ color: '#fff', fontWeight: 600, fontSize: 13 }}>Senior Associate</div></div>
-              <div style={{ marginLeft: 16 }}><div style={{ color: '#94c5cf', fontSize: 11 }}>Home site:</div><div style={{ color: '#fff', fontWeight: 600, fontSize: 13 }}>{emp.area}</div></div>
-            </div>
-            <button onClick={() => { setShowProfile(false); setShowAddForm(false); }} style={{ background: 'none', border: 'none', color: '#94c5cf', fontSize: 22, cursor: 'pointer' }}>✕</button>
-          </div>
-
-          {/* Tabs */}
-          <div style={{ borderBottom: `1px solid ${S4.border}`, background: '#fff', padding: '0 20px', display: 'flex', flexShrink: 0 }}>
-            {['Summary','Employee info','HR records','Payroll','Documents','Audit'].map(tab => (
-              <div key={tab} style={{ padding: '11px 16px', fontSize: 13, cursor: 'pointer', color: tab === 'Payroll' ? S4.midTeal : S4.subtext, fontWeight: tab === 'Payroll' ? 700 : 400, borderBottom: tab === 'Payroll' ? `2.5px solid ${S4.midTeal}` : '2.5px solid transparent', marginBottom: -1 }}>
-                {tab}
-              </div>
-            ))}
-          </div>
-
-          {/* Body */}
-          <div style={{ overflowY: 'auto', flex: 1, padding: 18, background: S4.pageBg, display: 'flex', flexDirection: 'column', gap: 14 }}>
-
-            {/* FIX 11: Context banner linking profile changes to current payroll */}
-            {isAmendMode || isRerunRequired ? (
-              <InfoBanner color="amber" text={`Active payroll period: 23/03/2025 – 30/03/2025. Any deductions added here will be flagged as pending and applied when this payroll is re-calculated.`} />
-            ) : (
-              <InfoBanner color="blue" text={`Changes made here will take effect in the next payroll run (period: 23/03/2025 – 30/03/2025) unless amend mode is active.`} />
-            )}
-
-            {/* Pay Info + YTD */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-              <div style={{ background: '#fff', border: `1px solid ${S4.border}`, borderRadius: 10, overflow: 'hidden' }}>
-                <div style={{ padding: '10px 16px', borderBottom: `1px solid ${S4.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontWeight: 700, fontSize: 13, color: S4.text }}>Pay Information</span>
-                  <button style={{ background: 'none', border: 'none', color: S4.subtext, cursor: 'pointer', fontSize: 14 }}>✏</button>
-                </div>
-                <div style={{ padding: '14px 16px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px 8px' }}>
-                  {[['1257L','Tax Code'],['No','W1M1'],['No','Student Loan'],['M','NI Category'],['12345678901','HMRC submission ID'],['No','Post Graduate Loan']].map(([val,lbl],i) => (
-                    <div key={i}><div style={{ fontWeight: 600, fontSize: 14, color: S4.text }}>{val}</div><div style={{ fontSize: 11, color: S4.subtext, marginTop: 2 }}>{lbl}</div></div>
-                  ))}
-                </div>
-              </div>
-              <div style={{ background: '#fff', border: `1px solid ${S4.border}`, borderRadius: 10, overflow: 'hidden' }}>
-                <div style={{ padding: '10px 16px', borderBottom: `1px solid ${S4.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontWeight: 700, fontSize: 13, color: S4.text }}>Year to Dates</span>
-                  <button style={{ fontSize: 12, color: S4.midTeal, background: 'none', border: 'none', cursor: 'pointer' }}>View more →</button>
-                </div>
-                <div style={{ padding: '14px 16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 8px' }}>
-                  {[['Gross Earnings','£22,500'],['Gross Earning for NI','£9,568.80'],['Gross Earnings for Tax','£6,021.50'],['Tax Paid','£7,800.43']].map(([lbl,val],i) => (
-                    <div key={i}><div style={{ fontSize: 11, color: S4.midTeal }}>{lbl}</div><div style={{ fontWeight: 700, fontSize: 16, color: S4.text, marginTop: 3 }}>{val}</div></div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Additions and Deductions */}
-            <div style={{ background: '#fff', border: `1px solid ${S4.border}`, borderRadius: 10, overflow: 'hidden' }}>
-              <div style={{ padding: '12px 16px', borderBottom: `1px solid ${S4.border}` }}>
-                <span style={{ fontWeight: 700, fontSize: 14, color: S4.text }}>Additions and Deductions</span>
-              </div>
-              <div style={{ padding: '10px 16px', borderBottom: `1px solid ${S4.border}`, display: 'flex', gap: 10, alignItems: 'center' }}>
-                <div style={{ flex: 1, border: `1px solid ${S4.border}`, borderRadius: 8, padding: '8px 12px', background: S4.cardBg, fontSize: 13, color: '#aab', display: 'flex', alignItems: 'center', gap: 8 }}>🔍 Search for a Pay Element...</div>
-                <button onClick={() => setShowAddForm(v => !v)} style={{ background: S4.darkTeal, color: '#fff', border: 'none', borderRadius: 8, padding: '8px 18px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>+ Add</button>
-              </div>
-              {showAddForm && (
-                <div style={{ padding: 16, background: '#f0f9ff', borderBottom: `1px solid #bae6fd` }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: S4.subtext, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>New Entry</div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                    <div><FieldLabel>Type *</FieldLabel><S4Select value={dedType} onChange={e => setDedType(e.target.value)}>{['Deduction','Addition','AOE – Attachment of Earnings','AOE – Council Tax','AOE – Child Support'].map(t => <option key={t} value={t}>{t}</option>)}</S4Select></div>
-                    <div><FieldLabel>Pay Element *</FieldLabel><S4Select value={dedEl} onChange={e => setDedEl(e.target.value)}><option value="">Select pay element...</option>{PAY_ELEMENTS.map(p => <option key={p} value={p}>{p}</option>)}</S4Select></div>
-                    <div><FieldLabel>Start Date *</FieldLabel><S4Input value={dedStart} onChange={e => setDedStart(e.target.value)} placeholder="DD/MM/YYYY" /></div>
-                    <div><FieldLabel>End Date (optional)</FieldLabel><S4Input value={dedEnd} onChange={e => setDedEnd(e.target.value)} placeholder="DD/MM/YYYY or leave blank" /></div>
-                    <div><FieldLabel>Amount *</FieldLabel><S4Input prefix="£" value={dedAmt} onChange={e => setDedAmt(e.target.value)} placeholder="0.00" /></div>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 12 }}>
-                    <TealBtn outline sm onClick={() => setShowAddForm(false)}>Cancel</TealBtn>
-                    <TealBtn sm disabled={!dedEl || !dedAmt || !dedStart} onClick={saveDed}>Save</TealBtn>
-                  </div>
-                </div>
-              )}
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                <thead>
-                  <tr style={{ background: S4.darkTeal }}>
-                    {['Start date','End date','Pay Element details','Deduction','Actions'].map((h, i) => (
-                      <th key={i} style={{ padding: '10px 16px', color: '#fff', fontWeight: 600, textAlign: i === 3 ? 'right' : 'left', fontSize: 12 }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {dedRows.map((row, i) => (
-                    <tr key={row.id} style={{ borderBottom: `1px solid ${S4.border}`, background: row.pending ? '#fffbeb' : i % 2 === 0 ? '#fff' : '#fafcfd' }}>
-                      <td style={{ padding: '10px 16px', color: S4.text }}>{row.start}</td>
-                      <td style={{ padding: '10px 16px', color: S4.text }}>{row.end}</td>
-                      <td style={{ padding: '10px 16px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                          {row.type && row.type !== 'Deduction' && <span style={{ background: '#ede9fe', color: '#7c3aed', borderRadius: 4, padding: '1px 6px', fontSize: 10, fontWeight: 700 }}>{row.type}</span>}
-                          <span style={{ color: S4.text }}>{row.element}</span>
-                          {row.pending && <span style={{ background: S4.amberLight, color: '#92400e', borderRadius: 999, padding: '1px 8px', fontSize: 10, fontWeight: 700 }}>Pending re-calculate</span>}
-                        </div>
-                      </td>
-                      <td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 600, color: S4.text }}>{row.amount}</td>
-                      <td style={{ padding: '10px 16px' }}>
-                        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-                          <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: S4.subtext, fontSize: 15 }}>✏</button>
-                          <button onClick={() => setDedRows(p => p.filter(d => d.id !== row.id))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#f87171', fontSize: 15 }}>🗑</button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                  {dedRows.length === 0 && <tr><td colSpan={5} style={{ padding: 24, textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>No additions or deductions recorded</td></tr>}
-                </tbody>
-              </table>
-              <div style={{ padding: '8px 16px', background: S4.cardBg, borderTop: `1px solid ${S4.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 12, color: S4.subtext }}>Showing 1–{dedRows.length} of {dedRows.length}</span>
-                <div style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
-                  {['«','‹','1','2','3','›','»'].map((p, i) => (
-                    <button key={i} style={{ width: 24, height: 24, borderRadius: 4, border: `1px solid ${S4.border}`, background: p === '1' ? S4.midTeal : '#fff', color: p === '1' ? '#fff' : S4.subtext, fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{p}</button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div style={{ borderTop: `1px solid ${S4.border}`, background: S4.cardBg, borderRadius: '0 0 12px 12px', padding: '10px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-            <span style={{ fontSize: 12, color: dedRows.some(d => d.pending) ? '#92400e' : S4.subtext }}>
-              {dedRows.some(d => d.pending) ? '⚠ Pending entries will apply after payroll is re-calculated.' : ''}
-            </span>
-            <TealBtn outline sm onClick={() => { setShowProfile(false); setShowAddForm(false); }}>Close</TealBtn>
           </div>
         </div>
+
+        <!-- Employer info bar -->
+        <div style="background:#eef4f7;padding:10px 24px;border-bottom:1px solid #d0e2e8;display:flex;gap:24px;flex-wrap:wrap;">
+          <div style="font-size:11px;color:#6b8a94;">PAYE Ref: <strong style="color:#1a2e35;font-family:monospace;">120/A12345</strong></div>
+          <div style="font-size:11px;color:#6b8a94;">NI Number: <strong style="color:#1a2e35;font-family:monospace;">AB 12 34 56 C</strong></div>
+          <div style="font-size:11px;color:#6b8a94;">Tax Code: <strong style="color:#1a2e35;">1257L</strong></div>
+          <div style="font-size:11px;color:#6b8a94;">NI Category: <strong style="color:#1a2e35;">A</strong></div>
+        </div>
+
+        <div style="padding:20px 24px;display:flex;flex-direction:column;gap:0;">
+
+          <!-- Payments section -->
+          <div style="font-size:11px;font-weight:700;color:#6b8a94;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Payments</div>
+
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;">
+            <span style="font-size:13px;color:#1a2e35;">Hourly Pay</span>
+            <span style="font-size:13px;font-weight:600;color:#1a2e35;">£2,184.00</span>
+          </div>
+
+          <!-- ADJUSTMENT PAY ELEMENT — the new element -->
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid #f1f5f9;background:#f0fdf4;border-left:3px solid #059669;margin:0 -12px;padding-left:12px;">
+            <div>
+              <div style="font-size:13px;font-weight:700;color:#059669;">Adjustment — January 2026</div>
+              <div style="font-size:11px;color:#6b8a94;margin-top:2px;">Rota correction · Applied following operator approval of pay run comparison</div>
+            </div>
+            <span style="font-size:13px;font-weight:700;color:#059669;">+£364.00</span>
+          </div>
+
+          <!-- Gross total -->
+          <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:2px solid #d0e2e8;margin-top:4px;">
+            <span style="font-size:14px;font-weight:800;color:#1a2e35;">Gross Pay</span>
+            <span style="font-size:14px;font-weight:800;color:#1a2e35;">£2,548.00</span>
+          </div>
+
+          <!-- Deductions section -->
+          <div style="font-size:11px;font-weight:700;color:#6b8a94;text-transform:uppercase;letter-spacing:0.5px;margin-top:14px;margin-bottom:8px;">Deductions</div>
+
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;">
+            <span style="font-size:13px;color:#1a2e35;">Income Tax (PAYE)</span>
+            <span style="font-size:13px;font-weight:600;color:#dc2626;">−£350.40</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;">
+            <span style="font-size:13px;color:#1a2e35;">Employee National Insurance</span>
+            <span style="font-size:13px;font-weight:600;color:#dc2626;">−£136.13</span>
+          </div>
+
+          <!-- Net pay -->
+          <div style="background:#0d3d4f;border-radius:8px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;margin-top:14px;">
+            <span style="color:#94c5cf;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Net Pay</span>
+            <span style="color:#fff;font-size:22px;font-weight:800;">£2,061.47</span>
+          </div>
+
+          <!-- Employer section -->
+          <div style="font-size:11px;font-weight:700;color:#6b8a94;text-transform:uppercase;letter-spacing:0.5px;margin-top:18px;margin-bottom:8px;">Employer Contributions (not deducted from pay)</div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;">
+            <span style="font-size:13px;color:#6b8a94;">Employer National Insurance</span>
+            <span style="font-size:13px;color:#6b8a94;">£382.20</span>
+          </div>
+
+          <!-- YTD -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px;">
+            <div style="background:#eef4f7;border-radius:8px;padding:10px 14px;">
+              <div style="font-size:10px;color:#6b8a94;font-weight:700;text-transform:uppercase;">YTD Gross</div>
+              <div style="font-size:16px;font-weight:800;color:#1a2e35;margin-top:2px;">£4,732.00</div>
+            </div>
+            <div style="background:#eef4f7;border-radius:8px;padding:10px 14px;">
+              <div style="font-size:10px;color:#6b8a94;font-weight:700;text-transform:uppercase;">YTD Tax Paid</div>
+              <div style="font-size:16px;font-weight:800;color:#1a2e35;margin-top:2px;">£654.40</div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Payslip footer -->
+        <div style="padding:12px 24px;background:#f8fafc;border-top:1px solid #d0e2e8;font-size:11px;color:#6b8a94;text-align:center;">
+          This payslip is generated by S4Pay · PAY-2026-FEB-001 · The Anchor Group
+        </div>
+
       </div>
-    );
-  };
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // RENDER
-  // ══════════════════════════════════════════════════════════════════════════
-  return (
-    <div>
-      {PayrollScreen()}
-      {showAmendConfirm   && AmendConfirmModal()}
-      {showApproveConfirm && ApproveConfirmModal()}
-      {showAmendHistory   && AmendHistoryModal()}
-      {showTypeModal      && TypeModal()}
-      {showSourcePopup    && SourcePopup()}
-      {showBulkPopup      && BulkPopup()}
-      {showRotaConfirm    && RotaConfirm()}
-      {showRowModal       && RowModal()}
-      {showProfile        && ProfileModal()}
+      <div style="display:flex;gap:10px;margin-top:16px;justify-content:space-between;">
+        <button class="btn btn-outline" onclick="goToScreen(6)">← Back to run summary</button>
+        <button class="btn btn-outline" onclick="goToScreen(1)">↩ Reset journey</button>
+      </div>
+
     </div>
-  );
-};
 
+    <div class="annotation" style="max-width:580px;margin:20px auto 0;">
+      <div class="annotation-title">Screen 7 — Payslip notes</div>
+      <div class="annotation-grid">
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Distinct pay element:</strong> "Adjustment — January 2026" is a named, standalone pay element — not hidden inside another line or added to basic pay silently.</span></div>
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Period labelling:</strong> The month name in the label ("January 2026") tells the employee exactly which period the correction relates to.</span></div>
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Sub-description:</strong> A second line beneath the element name explains the source — "Rota correction · Applied automatically from previous pay run comparison" — for both operator and employee clarity.</span></div>
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Negative adjustments:</strong> Tom Baker's −£420.00 would appear identically structured but in red, labelled "Adjustment — January 2026" with a minus sign, included in gross and reflected in reduced net pay.</span></div>
+      </div>
+    </div>
+  </div>
+</div>
 
+<script>
+  let acknowledged = false;
 
+  function goToScreen(n) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen' + n).classList.add('active');
 
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<PayrollAmendmentsWireframe />);
-  </script>
+    const steps = ['js1','js2','js3','js4','js5','js6','js7'];
+    steps.forEach((id, i) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.className = 'journey-step';
+      el.style.background = '';
+      el.style.color = '';
+      if (i + 1 < n) { el.classList.add('step-done'); el.style.background = '#d1fae5'; el.style.color = '#059669'; }
+      else if (i + 1 === n) { el.classList.add('step-active'); }
+      else { el.classList.add('step-idle'); }
+    });
+
+    window.scrollTo(0, 0);
+  }
+
+  function toggleAck() {
+    acknowledged = !acknowledged;
+    const box = document.getElementById('ackBox');
+    const check = document.getElementById('ackCheck');
+    const btn = document.getElementById('proceedBtn');
+    if (acknowledged) {
+      box.classList.add('checked'); check.textContent = '✓';
+      btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer';
+    } else {
+      box.classList.remove('checked'); check.textContent = '';
+      btn.disabled = true; btn.style.opacity = '0.4'; btn.style.cursor = 'not-allowed';
+    }
+  }
+
+  // Per-row approve/reject state for comparison modal
+  const decisions = { kh:'approve', sw:'approve', tb:'reject', jd:'approve', ep:'reject', rn:'approve', mo:'approve', lc:'reject' };
+
+  function setDecision(emp, decision) {
+    decisions[emp] = decision;
+    const row = document.getElementById('row-' + emp);
+    if (!row) return;
+
+    // Update button styles
+    const approveBtn = row.querySelector('.approve-btn');
+    const rejectBtn  = row.querySelector('.reject-btn');
+    if (decision === 'approve') {
+      approveBtn.className = 'decision-btn approve-btn active-approve';
+      rejectBtn.className  = 'decision-btn reject-btn';
+      row.style.opacity = '1';
+    } else {
+      rejectBtn.className  = 'decision-btn reject-btn active-reject';
+      approveBtn.className = 'decision-btn approve-btn';
+      row.style.opacity = '0.55';
+    }
+
+    // Recount
+    const approved = Object.values(decisions).filter(d => d === 'approve').length;
+    const rejected = Object.values(decisions).filter(d => d === 'reject').length;
+    document.getElementById('approvedCount').textContent = approved;
+    document.getElementById('rejectedCount').textContent = rejected;
+    const btn = document.getElementById('confirmSelectionBtn');
+    if (btn) btn.innerHTML = 'Apply ' + approved + ' approved &amp; recalculate →';
+  }
+
+  function approveFeb() {
+    const status = document.querySelector('#screen6 .pill-teal');
+    if (status) { status.textContent = '✓ Approved'; status.className = 'pill pill-green'; }
+    const btn = document.querySelector('#screen6 .btn-teal.btn-sm');
+    if (btn) { btn.textContent = '✓ Approved'; btn.disabled = true; btn.style.opacity = '0.5'; }
+  }
+</script>
 </body>
 </html>
