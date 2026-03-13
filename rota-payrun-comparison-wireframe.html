@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>S4Pay — Unlocked Rota & Pay Run Comparison</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #f4f7f9; color: #1a2e35; font-size: 14px; }
+
+  /* ── Layout ── */
+  .topbar { background: #0d3d4f; height: 48px; display: flex; align-items: center; padding: 0 24px; gap: 16px; }
+  .topbar-logo { color: #fff; font-weight: 800; font-size: 16px; letter-spacing: -0.5px; }
+  .topbar-sep { width: 1px; height: 20px; background: rgba(255,255,255,0.2); }
+  .topbar-crumb { color: #94c5cf; font-size: 12px; }
+  .topbar-crumb span { color: #fff; font-weight: 600; }
+
+  .page { padding: 24px 28px; max-width: 1100px; margin: 0 auto; }
+
+  /* ── Org header ── */
+  .org-header { background: #fff; border: 1px solid #d0e2e8; border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
+  .org-header-top { background: #0d3d4f; padding: 16px 22px; display: flex; align-items: center; justify-content: space-between; }
+  .org-avatar { width: 48px; height: 48px; border-radius: 50%; background: #0891b2; color: #fff; font-weight: 800; font-size: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .org-name { color: #fff; font-weight: 700; font-size: 18px; }
+  .org-meta { color: #94c5cf; font-size: 12px; margin-top: 2px; }
+  .org-header-bar { padding: 10px 22px; background: #eef4f7; border-top: 1px solid #d0e2e8; display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+  .paye-kv { font-size: 11px; color: #6b8a94; }
+  .paye-kv strong { color: #1a2e35; font-family: monospace; }
+
+  /* ── Pills ── */
+  .pill { border-radius: 999px; padding: 2px 10px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
+  .pill-green  { background: #d1fae5; color: #059669; border: 1px solid #6ee7b7; }
+  .pill-amber  { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+  .pill-teal   { background: #e6f4f6; color: #1d8a9a; border: 1px solid #a8d8df; }
+  .pill-red    { background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; }
+  .pill-navy   { background: rgba(255,255,255,0.15); color: #fff; border: none; }
+
+  /* ── Buttons ── */
+  .btn { border-radius: 6px; padding: 7px 14px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 6px; transition: opacity 0.15s; }
+  .btn:hover { opacity: 0.88; }
+  .btn-primary { background: #0d3d4f; color: #fff; }
+  .btn-outline { background: transparent; color: #0d3d4f; border: 1.5px solid #0d3d4f; }
+  .btn-ghost   { background: transparent; color: #6b8a94; border: 1.5px solid #d0e2e8; }
+  .btn-teal    { background: #1d8a9a; color: #fff; }
+  .btn-danger  { background: #dc2626; color: #fff; }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+  .btn-full { width: 100%; justify-content: center; }
+  .btn-icon { background: rgba(255,255,255,0.15); border: none; color: #fff; border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 600; cursor: pointer; }
+
+  /* ── Frequency card ── */
+  .freq-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  .freq-card { background: #fff; border: 1px solid #d0e2e8; border-radius: 12px; overflow: hidden; }
+  .freq-card-header { background: #0d3d4f; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; }
+  .freq-card-title { color: #fff; font-weight: 700; font-size: 14px; }
+  .freq-card-sub   { color: #94c5cf; font-size: 11px; margin-top: 2px; }
+  .freq-card-body  { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat-box { border-radius: 8px; padding: 10px 14px; }
+  .stat-box-green  { background: #f0fdf4; border: 1px solid #6ee7b7; }
+  .stat-box-amber  { background: #fef3c7; border: 1px solid #fcd34d; }
+  .stat-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-label-green { color: #059669; }
+  .stat-label-amber { color: #92400e; }
+  .stat-value { font-size: 17px; font-weight: 800; color: #1a2e35; margin-top: 3px; }
+  .pay-method-row { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: #eef4f7; border-radius: 8px; }
+  .rota-status-row { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; }
+  .rota-unlocked { background: #fef3c7; border: 1px solid #fcd34d; color: #92400e; }
+  .rota-locked   { background: #d1fae5; border: 1px solid #6ee7b7; color: #059669; }
+  .pay-types { display: flex; flex-wrap: wrap; gap: 6px; }
+  .freq-card-footer { display: flex; gap: 8px; padding-top: 4px; border-top: 1px solid #d0e2e8; }
+
+  /* ── Section heading ── */
+  .section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .section-title { font-size: 16px; font-weight: 700; color: #1a2e35; }
+  .section-sub   { font-size: 12px; color: #6b8a94; margin-top: 3px; }
+
+  /* ── Journey progress bar ── */
+  .journey-bar { background: #fff; border-bottom: 1px solid #d0e2e8; padding: 10px 28px; display: flex; align-items: center; gap: 0; justify-content: space-between; flex-wrap: wrap; }
+  .journey-step { display: flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+  .step-done   { background: #d1fae5; color: #059669; }
+  .step-active { background: #0d3d4f; color: #fff; }
+  .step-idle   { background: #f1f5f9; color: #94a3b8; }
+  .step-arrow  { color: #d0e2e8; font-size: 14px; }
+
+  /* ── Overlay & modals ── */
+  .overlay { position: fixed; inset: 0; background: rgba(13,61,79,0.55); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 16px; }
+  .modal { background: #fff; border-radius: 12px; box-shadow: 0 24px 64px rgba(0,0,0,0.22); width: 100%; overflow: hidden; }
+  .modal-sm  { max-width: 480px; }
+  .modal-md  { max-width: 620px; }
+  .modal-lg  { max-width: 860px; }
+  .modal-header { background: #eef4f7; border-bottom: 1px solid #d0e2e8; padding: 14px 20px; display: flex; align-items: flex-start; justify-content: space-between; }
+  .modal-badge { border-radius: 6px; padding: 2px 8px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; display: inline-block; }
+  .modal-badge-amber { background: #fef3c7; color: #92400e; }
+  .modal-badge-teal  { background: #e6f4f6; color: #1d8a9a; }
+  .modal-badge-blue  { background: #dbeafe; color: #1d4ed8; }
+  .modal-title { font-weight: 700; color: #1a2e35; font-size: 15px; }
+  .modal-sub   { font-size: 12px; color: #6b8a94; margin-top: 3px; }
+  .modal-close { background: none; border: none; font-size: 20px; color: #94a3b8; cursor: pointer; line-height: 1; margin-left: 12px; flex-shrink: 0; }
+  .modal-body  { padding: 20px; display: flex; flex-direction: column; gap: 14px; max-height: 70vh; overflow-y: auto; }
+  .modal-footer { background: #eef4f7; border-top: 1px solid #d0e2e8; padding: 12px 20px; display: flex; justify-content: flex-end; gap: 10px; }
+
+  /* ── Banners ── */
+  .banner { border-radius: 8px; padding: 10px 14px; font-size: 12px; display: flex; gap: 8px; align-items: flex-start; }
+  .banner-amber { background: #fef3c7; border: 1px solid #fcd34d; color: #92400e; }
+  .banner-blue  { background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; }
+  .banner-green { background: #d1fae5; border: 1px solid #6ee7b7; color: #065f46; }
+  .banner-red   { background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; }
+
+  /* ── Warning checklist ── */
+  .warning-box { background: #fff7ed; border: 1.5px solid #fed7aa; border-radius: 10px; padding: 16px; }
+  .warning-title { font-weight: 700; color: #92400e; font-size: 14px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .warning-list { display: flex; flex-direction: column; gap: 8px; }
+  .warning-item { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; color: #78350f; }
+  .warning-dot  { width: 6px; height: 6px; border-radius: 50%; background: #f59e0b; flex-shrink: 0; margin-top: 5px; }
+
+  /* ── Acknowledge checkbox ── */
+  .ack-box { border: 1.5px solid #fcd34d; border-radius: 8px; padding: 12px 14px; background: #fffbeb; display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
+  .ack-box.checked { border-color: #6ee7b7; background: #f0fdf4; }
+  .ack-check { width: 18px; height: 18px; border-radius: 4px; border: 2px solid #fcd34d; background: #fff; flex-shrink: 0; display: flex; align-items: center; justify-content: center; margin-top: 1px; }
+  .ack-box.checked .ack-check { background: #059669; border-color: #059669; color: #fff; font-size: 11px; font-weight: 700; }
+  .ack-label { font-size: 13px; font-weight: 600; color: #92400e; }
+  .ack-box.checked .ack-label { color: #065f46; }
+
+  /* ── Audit log ── */
+  .audit-row { display: flex; gap: 10px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
+  .audit-icon { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
+  .audit-icon-amber { background: #fef3c7; }
+  .audit-icon-green { background: #d1fae5; }
+  .audit-icon-teal  { background: #e6f4f6; }
+  .audit-meta { font-size: 11px; color: #6b8a94; margin-top: 2px; }
+  .audit-badge { background: #fef3c7; color: #92400e; border-radius: 999px; padding: 1px 8px; font-size: 10px; font-weight: 700; margin-left: 6px; }
+
+  /* ── Processing spinner ── */
+  .spinner-wrap { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 30px 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner { width: 48px; height: 48px; border: 4px solid #e6f4f6; border-top-color: #1d8a9a; border-radius: 50%; animation: spin 0.8s linear infinite; }
+  .spinner-steps { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+  .s-step { display: flex; gap: 8px; align-items: center; font-size: 12px; padding: 6px 10px; border-radius: 6px; }
+  .s-step-done   { color: #059669; background: #f0fdf4; }
+  .s-step-active { color: #0d3d4f; background: #e6f4f6; font-weight: 600; }
+  .s-step-idle   { color: #94a3b8; }
+
+  /* ── Comparison table ── */
+  .diff-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .diff-table th { background: #eef4f7; color: #6b8a94; font-weight: 700; text-align: left; padding: 8px 10px; border-bottom: 2px solid #d0e2e8; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; }
+  .diff-table td { padding: 9px 10px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+  .diff-table tr:last-child td { border-bottom: none; }
+  .diff-table tr.selected td { background: #f0fdf4; }
+  .diff-table tr:hover td { background: #f8fafc; cursor: pointer; }
+  .diff-table tr.selected:hover td { background: #d1fae5; }
+  .diff-check { width: 16px; height: 16px; border-radius: 4px; border: 2px solid #d0e2e8; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; }
+  .diff-check.on { background: #059669; border-color: #059669; color: #fff; }
+  .delta-pos { color: #059669; font-weight: 700; }
+  .delta-neg { color: #dc2626; font-weight: 700; }
+  .emp-cell   { display: flex; align-items: center; gap: 8px; }
+  .emp-av     { width: 26px; height: 26px; border-radius: 50%; color: #fff; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+  /* ── Complete state ── */
+  .complete-card { background: #fff; border: 2px solid #6ee7b7; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+  .complete-icon { width: 48px; height: 48px; border-radius: 50%; background: #d1fae5; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+
+  /* ── Select all bar ── */
+  .select-bar { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; background: #f8fafc; border-radius: 8px; border: 1px solid #d0e2e8; margin-bottom: 2px; }
+
+  /* ── Annotation strip ── */
+  .annotation { background: #fff; border-radius: 10px; padding: 14px 18px; border: 1px solid #d0e2e8; margin-top: 20px; }
+  .annotation-title { font-size: 11px; font-weight: 700; color: #6b8a94; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+  .annotation-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px; }
+  .annotation-item { font-size: 12px; display: flex; gap: 8px; }
+  .annotation-dot  { color: #1d8a9a; font-weight: 700; flex-shrink: 0; }
+
+  /* ── Step indicator ── */
+  .step-indicator { display: flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #d0e2e8; border-radius: 8px; padding: 8px 14px; font-size: 12px; color: #6b8a94; margin-bottom: 16px; }
+  .step-num { background: #0d3d4f; color: #fff; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+
+  /* hide inactive screens */
+  .screen { display: none; }
+  .screen.active { display: block; }
+</style>
+</head>
+<body>
+
+<!-- ══ TOP BAR ══ -->
+<div class="topbar">
+  <div class="topbar-logo">S4Pay</div>
+  <div class="topbar-sep"></div>
+  <div class="topbar-crumb">Bureau Dashboard → Active Clients → <span>The Anchor Group</span></div>
+</div>
+
+<!-- ══ JOURNEY BAR ══ -->
+<div class="journey-bar" id="journeyBar">
+  <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
+    <div class="journey-step step-active" id="js1">1 · Dashboard</div>
+    <div class="step-arrow">›</div>
+    <div class="journey-step step-idle" id="js2">2 · Rota Warning</div>
+    <div class="step-arrow">›</div>
+    <div class="journey-step step-idle" id="js3">3 · Processing</div>
+    <div class="step-arrow">›</div>
+    <div class="journey-step step-idle" id="js4">4 · Jan Complete</div>
+    <div class="step-arrow">›</div>
+    <div class="journey-step step-idle" id="js5">5 · Comparison</div>
+    <div class="step-arrow">›</div>
+    <div class="journey-step step-idle" id="js6">6 · Feb Summary</div>
+    <div class="step-arrow">›</div>
+    <div class="journey-step step-idle" id="js7">7 · Payslip</div>
+  </div>
+  <div style="font-size:11px;color:#6b8a94;">Story 1 covers steps 1–4 &nbsp;·&nbsp; Story 2 covers steps 4–7</div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     SCREEN 1 — ORG DASHBOARD (JANUARY, ROTA UNLOCKED)
+     ════════════════════════════════════════════════════════ -->
+<div class="screen active" id="screen1">
+  <div class="page">
+
+    <div class="step-indicator">
+      <div class="step-num">1</div>
+      Bureau operator opens The Anchor Group dashboard. The January pay run is ready to process but the rota has not been locked.
+    </div>
+
+    <!-- Org header -->
+    <div class="org-header">
+      <div class="org-header-top">
+        <div style="display:flex;align-items:center;gap:14px;">
+          <div class="org-avatar">AG</div>
+          <div>
+            <div class="org-name">The Anchor Group</div>
+            <div class="org-meta">Hospitality · 4 sites · 62 employees</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span class="pill pill-green">✓ PAYE Configured</span>
+          <span class="pill pill-green">✓ Active</span>
+          <button class="btn-icon">⚙ Org Settings</button>
+        </div>
+      </div>
+      <div class="org-header-bar">
+        <div class="paye-kv">PAYE Ref: <strong>120/A12345</strong></div>
+        <div class="paye-kv">Accounts Office: <strong>120PA00123456</strong></div>
+        <div class="paye-kv">Ref Name: <strong>THE ANCHOR GROUP</strong></div>
+        <div style="margin-left:auto;display:flex;gap:8px;">
+          <span class="pill pill-green" style="font-size:11px;">Employment Allowance: Yes</span>
+          <span class="pill pill-green" style="font-size:11px;">SER: Yes</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Frequencies -->
+    <div class="section-head">
+      <div>
+        <div class="section-title">Pay Frequencies</div>
+        <div class="section-sub">Next pay day, approval deadline, payment method and pay types for each frequency.</div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-outline btn-sm">⚙ Org Settings</button>
+        <button class="btn btn-primary btn-sm">＋ Add pay frequency</button>
+      </div>
+    </div>
+
+    <div class="freq-grid">
+
+      <!-- Monthly Salaried — ROTA UNLOCKED -->
+      <div class="freq-card" style="border-color:#fcd34d;">
+        <div class="freq-card-header">
+          <div>
+            <div class="freq-card-title">Monthly – Salaried</div>
+            <div class="freq-card-sub">Monthly · BACS</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span class="pill pill-green">Active</span>
+            <button class="btn-icon">✏ Edit</button>
+          </div>
+        </div>
+        <div class="freq-card-body">
+          <div class="stat-grid">
+            <div class="stat-box stat-box-green">
+              <div class="stat-label stat-label-green">Next Pay Day</div>
+              <div class="stat-value">28 Jan 2026</div>
+            </div>
+            <div class="stat-box stat-box-amber">
+              <div class="stat-label stat-label-amber">Approval Deadline</div>
+              <div class="stat-value">24 Jan 2026</div>
+            </div>
+          </div>
+          <div class="pay-method-row">
+            <span style="font-size:14px;">💳</span>
+            <span style="font-size:12px;color:#6b8a94;">Payment method:</span>
+            <span style="font-size:13px;font-weight:700;">BACS</span>
+          </div>
+          <!-- ROTA STATUS — UNLOCKED -->
+          <div class="rota-status-row rota-unlocked">
+            <span>⚠</span>
+            <span>Rota not locked — payroll can still be processed</span>
+          </div>
+          <div>
+            <div style="font-size:11px;color:#6b8a94;margin-bottom:6px;">Pay types included:</div>
+            <div class="pay-types">
+              <span class="pill pill-teal">Basic Salary</span>
+              <span class="pill pill-teal">Bonus</span>
+            </div>
+          </div>
+          <div class="freq-card-footer">
+            <button class="btn btn-ghost btn-sm btn-full">View schedule</button>
+            <button class="btn btn-teal btn-sm btn-full" onclick="goToScreen(2)">Process payroll →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Weekly Hourly -->
+      <div class="freq-card">
+        <div class="freq-card-header">
+          <div>
+            <div class="freq-card-title">Weekly – Hourly</div>
+            <div class="freq-card-sub">Weekly · BACS</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span class="pill pill-green">Active</span>
+            <button class="btn-icon">✏ Edit</button>
+          </div>
+        </div>
+        <div class="freq-card-body">
+          <div class="stat-grid">
+            <div class="stat-box stat-box-green">
+              <div class="stat-label stat-label-green">Next Pay Day</div>
+              <div class="stat-value">02 Feb 2026</div>
+            </div>
+            <div class="stat-box stat-box-amber">
+              <div class="stat-label stat-label-amber">Approval Deadline</div>
+              <div class="stat-value">30 Jan 2026</div>
+            </div>
+          </div>
+          <div class="pay-method-row">
+            <span style="font-size:14px;">💳</span>
+            <span style="font-size:12px;color:#6b8a94;">Payment method:</span>
+            <span style="font-size:13px;font-weight:700;">BACS</span>
+          </div>
+          <div class="rota-status-row rota-locked">
+            <span>✓</span>
+            <span>Rota locked on 28 Jan 2026 at 09:14</span>
+          </div>
+          <div>
+            <div style="font-size:11px;color:#6b8a94;margin-bottom:6px;">Pay types included:</div>
+            <div class="pay-types">
+              <span class="pill pill-teal">Hourly Pay</span>
+              <span class="pill pill-teal">Shift Allowance</span>
+            </div>
+          </div>
+          <div class="freq-card-footer">
+            <button class="btn btn-ghost btn-sm btn-full">View schedule</button>
+            <button class="btn btn-ghost btn-sm btn-full" style="color:#94a3b8;cursor:not-allowed;">Process payroll →</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Annotation -->
+    <div class="annotation">
+      <div class="annotation-title">Screen 1 — State notes</div>
+      <div class="annotation-grid">
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Rota unlocked:</strong> Amber border on frequency card + warning row replaces green rota lock status. "Process payroll →" remains enabled.</span></div>
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Rota locked:</strong> Weekly card shows green lock confirmation. Process payroll button is greyed/disabled until rota is locked on the locked-rota journey.</span></div>
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Story 1 trigger:</strong> Clicking "Process payroll →" on an unlocked rota card launches the warning modal — not the payroll calculation directly.</span></div>
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>No silent processing:</strong> The system never processes silently past an unlocked rota — the warning modal is mandatory.</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     SCREEN 2 — STORY 1: ROTA WARNING MODAL
+     ════════════════════════════════════════════════════════ -->
+<div class="screen" id="screen2">
+  <div class="page">
+
+    <div class="step-indicator">
+      <div class="step-num">2</div>
+      Story 1 — Operator clicked "Process payroll →". Rota is not locked. Warning modal is presented before any calculation begins.
+    </div>
+
+    <!-- Dimmed dashboard behind modal -->
+    <div style="opacity:0.3;pointer-events:none;">
+      <div class="org-header">
+        <div class="org-header-top">
+          <div style="display:flex;align-items:center;gap:14px;">
+            <div class="org-avatar">AG</div>
+            <div><div class="org-name">The Anchor Group</div><div class="org-meta">Hospitality · 4 sites · 62 employees</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="overlay" style="position:absolute;top:0;left:0;right:0;bottom:0;">
+    <div class="modal modal-md">
+      <div class="modal-header">
+        <div>
+          <div class="modal-badge modal-badge-amber">⚠ Story 1 — Rota Override</div>
+          <div class="modal-title">Rota Not Locked — Proceed with Caution</div>
+          <div class="modal-sub">January 2026 · Monthly – Salaried · 62 employees</div>
+        </div>
+        <button class="modal-close">✕</button>
+      </div>
+      <div class="modal-body">
+
+        <div class="warning-box">
+          <div class="warning-title">⚠ The rota for this pay period has not been locked</div>
+          <div class="warning-list">
+            <div class="warning-item"><div class="warning-dot"></div><span>Hours data may not be finalised. Processing now uses the rota as it currently stands.</span></div>
+            <div class="warning-item"><div class="warning-dot"></div><span>Any rota amendments made after this run will not be reflected in January's payroll.</span></div>
+            <div class="warning-item"><div class="warning-dot"></div><span>Differences identified when February's payroll is initiated will be surfaced for review and can be applied as adjustments at that point.</span></div>
+            <div class="warning-item"><div class="warning-dot"></div><span>Your acknowledgement will be recorded in the audit log against this payroll run.</span></div>
+          </div>
+        </div>
+
+        <!-- Acknowledge checkbox -->
+        <div class="ack-box" id="ackBox" onclick="toggleAck()">
+          <div class="ack-check" id="ackCheck"></div>
+          <div>
+            <div class="ack-label" id="ackLabel">I understand the rota is not locked and acknowledge that any subsequent rota changes will need to be adjusted in the next pay period</div>
+            <div style="font-size:11px;color:#92400e;margin-top:4px;" id="ackSubLabel">This acknowledgement will be recorded against your user account (Sarah Mitchell) and timestamped.</div>
+          </div>
+        </div>
+
+        <!-- Audit preview -->
+        <div style="background:#f8fafc;border:1px solid #d0e2e8;border-radius:8px;padding:12px 14px;">
+          <div style="font-size:11px;font-weight:700;color:#6b8a94;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Audit entry that will be written on confirmation</div>
+          <div class="audit-row" style="border:none;padding:0;">
+            <div class="audit-icon audit-icon-amber">⚠</div>
+            <div>
+              <div style="font-size:12px;font-weight:700;color:#1a2e35;">Rota Override Acknowledgement <span class="audit-badge">ROTA OVERRIDE</span></div>
+              <div class="audit-meta">Sarah Mitchell · Bureau Operator · Jan 2026 Monthly Run (PAY-2026-JAN-001) · will be timestamped on confirm</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="goToScreen(1)">← Cancel</button>
+        <button class="btn btn-danger" id="proceedBtn" disabled onclick="goToScreen(3)" style="opacity:0.4;cursor:not-allowed;">
+          ⚠ Acknowledge &amp; Process Payroll
+        </button>
+      </div>
+    </div>
+    </div>
+
+    <div class="annotation" style="margin-top:420px;">
+      <div class="annotation-title">Screen 2 — Modal behaviour notes</div>
+      <div class="annotation-grid">
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Checkbox required:</strong> "Acknowledge & Process" button is disabled until the checkbox is ticked. Closing the modal returns to the dashboard without processing.</span></div>
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Audit preview:</strong> Operator can see exactly what will be written to the audit log before confirming. The entry is immutable once written.</span></div>
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Danger styling:</strong> Red confirm button signals this is a consequential action, not a routine confirmation.</span></div>
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Named user:</strong> The logged-in user is surfaced explicitly so the operator is aware their identity is being recorded.</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     SCREEN 3 — PROCESSING (CALCULATING JANUARY)
+     ════════════════════════════════════════════════════════ -->
+<div class="screen" id="screen3">
+  <div class="page">
+
+    <div class="step-indicator">
+      <div class="step-num">3</div>
+      Operator acknowledged. Payroll calculation is now running for January 2026.
+    </div>
+
+    <div class="org-header">
+      <div class="org-header-top">
+        <div style="display:flex;align-items:center;gap:14px;">
+          <div class="org-avatar">AG</div>
+          <div><div class="org-name">The Anchor Group</div><div class="org-meta">Monthly – Salaried · January 2026 · PAY-2026-JAN-001</div></div>
+        </div>
+        <span class="pill pill-amber">⏳ Calculating…</span>
+      </div>
+    </div>
+
+    <div class="modal modal-sm" style="margin:0 auto;">
+      <div class="modal-header">
+        <div>
+          <div class="modal-badge modal-badge-teal">Processing</div>
+          <div class="modal-title">Calculating January 2026 Payroll</div>
+          <div class="modal-sub">Monthly – Salaried · 62 employees</div>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="spinner-wrap">
+          <div class="spinner"></div>
+          <div style="font-weight:700;color:#1a2e35;font-size:14px;">Running payroll calculation…</div>
+        </div>
+        <div class="spinner-steps">
+          <div class="s-step s-step-done">✓ &nbsp;Audit entry written — rota override acknowledged by Sarah Mitchell</div>
+          <div class="s-step s-step-done">✓ &nbsp;Pay elements loaded for 62 employees</div>
+          <div class="s-step s-step-done">✓ &nbsp;PAYE &amp; NI calculated</div>
+          <div class="s-step s-step-done">✓ &nbsp;SSP, SMP and statutory deductions applied</div>
+          <div class="s-step s-step-active">⏳ Generating payslips…</div>
+          <div class="s-step s-step-idle">○ &nbsp;Preparing RTI FPS</div>
+          <div class="s-step s-step-idle">○ &nbsp;Marking run as complete</div>
+        </div>
+        <button class="btn btn-teal" style="width:100%;justify-content:center;margin-top:8px;" onclick="goToScreen(4)">
+          Skip to complete →
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     SCREEN 4 — JANUARY COMPLETE (STORY 1 END STATE)
+     ════════════════════════════════════════════════════════ -->
+<div class="screen" id="screen4">
+  <div class="page">
+
+    <div class="step-indicator">
+      <div class="step-num">4</div>
+      Story 1 complete. January payroll has been processed with the rota override. The audit log records the acknowledgement. Click "Process payroll →" on the frequency card to simulate February (Story 2).
+    </div>
+
+    <div class="org-header">
+      <div class="org-header-top">
+        <div style="display:flex;align-items:center;gap:14px;">
+          <div class="org-avatar">AG</div>
+          <div><div class="org-name">The Anchor Group</div><div class="org-meta">Hospitality · 4 sites · 62 employees</div></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span class="pill pill-green">✓ PAYE Configured</span>
+          <span class="pill pill-green">✓ Active</span>
+        </div>
+      </div>
+      <div class="org-header-bar">
+        <div class="paye-kv">PAYE Ref: <strong>120/A12345</strong></div>
+        <div class="paye-kv">Last run: <strong>January 2026 · Completed 28 Jan 2026</strong></div>
+        <div style="margin-left:auto;">
+          <span class="pill pill-amber">⚠ Jan run processed with unlocked rota</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Jan complete card -->
+    <div class="complete-card" style="margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div class="complete-icon">✓</div>
+        <div>
+          <div style="font-weight:700;font-size:15px;color:#065f46;">January 2026 Payroll Complete</div>
+          <div style="font-size:12px;color:#6b8a94;margin-top:3px;">Monthly – Salaried · 62 employees · Processed 28 Jan 2026 · PAY-2026-JAN-001</div>
+        </div>
+        <div style="margin-left:auto;">
+          <button class="btn btn-ghost btn-sm">View payslips</button>
+        </div>
+      </div>
+      <div style="border-top:1px solid #a7f3d0;padding-top:12px;">
+        <div style="font-size:11px;font-weight:700;color:#6b8a94;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Audit log — this run</div>
+        <div class="audit-row">
+          <div class="audit-icon audit-icon-amber">⚠</div>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:#1a2e35;">Rota Override Acknowledged <span class="audit-badge">ROTA OVERRIDE</span></div>
+            <div class="audit-meta">Sarah Mitchell · Bureau Operator · 28 Jan 2026 at 11:42 · PAY-2026-JAN-001</div>
+          </div>
+        </div>
+        <div class="audit-row">
+          <div class="audit-icon audit-icon-green">✓</div>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:#1a2e35;">Payroll Calculated</div>
+            <div class="audit-meta">System · 28 Jan 2026 at 11:43 · 62 employees · Gross: £148,320.00</div>
+          </div>
+        </div>
+        <div class="audit-row" style="border:none;">
+          <div class="audit-icon audit-icon-teal">📄</div>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:#1a2e35;">RTI FPS Submitted</div>
+            <div class="audit-meta">System · 28 Jan 2026 at 11:44 · HMRC reference: FPS-2026-001</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Frequency cards — February -->
+    <div class="section-head">
+      <div>
+        <div class="section-title">Pay Frequencies</div>
+        <div class="section-sub">February run is now the upcoming period.</div>
+      </div>
+    </div>
+
+    <div class="freq-grid">
+      <div class="freq-card">
+        <div class="freq-card-header">
+          <div>
+            <div class="freq-card-title">Monthly – Salaried</div>
+            <div class="freq-card-sub">Monthly · BACS</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span class="pill pill-green">Active</span>
+          </div>
+        </div>
+        <div class="freq-card-body">
+          <div class="stat-grid">
+            <div class="stat-box stat-box-green">
+              <div class="stat-label stat-label-green">Next Pay Day</div>
+              <div class="stat-value">28 Feb 2026</div>
+            </div>
+            <div class="stat-box stat-box-amber">
+              <div class="stat-label stat-label-amber">Approval Deadline</div>
+              <div class="stat-value">24 Feb 2026</div>
+            </div>
+          </div>
+          <div class="rota-status-row rota-locked">
+            <span>✓</span>
+            <span>Rota locked on 20 Feb 2026 at 14:30</span>
+          </div>
+          <div class="banner banner-amber" style="font-size:11px;">
+            <span>⚠</span>
+            <span><strong>Previous run (January)</strong> was processed with an unlocked rota. A comparison will run automatically when February is initiated.</span>
+          </div>
+          <div class="freq-card-footer">
+            <button class="btn btn-ghost btn-sm btn-full">View schedule</button>
+            <button class="btn btn-teal btn-sm btn-full" onclick="goToScreen(5)">Process payroll →</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="freq-card">
+        <div class="freq-card-header">
+          <div><div class="freq-card-title">Weekly – Hourly</div><div class="freq-card-sub">Weekly · BACS</div></div>
+          <div><span class="pill pill-green">Active</span></div>
+        </div>
+        <div class="freq-card-body">
+          <div class="stat-grid">
+            <div class="stat-box stat-box-green"><div class="stat-label stat-label-green">Next Pay Day</div><div class="stat-value">02 Feb 2026</div></div>
+            <div class="stat-box stat-box-amber"><div class="stat-label stat-label-amber">Approval Deadline</div><div class="stat-value">30 Jan 2026</div></div>
+          </div>
+          <div class="rota-status-row rota-locked"><span>✓</span><span>Rota locked</span></div>
+          <div class="freq-card-footer">
+            <button class="btn btn-ghost btn-sm btn-full">View schedule</button>
+            <button class="btn btn-teal btn-sm btn-full">Process payroll →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="annotation">
+      <div class="annotation-title">Screen 4 — Story 1 end state notes</div>
+      <div class="annotation-grid">
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Audit log visible:</strong> Rota override entry is permanently displayed on the completed run, flagged distinctly from standard events.</span></div>
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>February warning banner:</strong> The frequency card proactively informs the operator that a comparison will run when February is initiated.</span></div>
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Rota locked for Feb:</strong> The rota was locked before February was initiated — this is independent of January's override.</span></div>
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Story 2 trigger:</strong> Clicking "Process payroll →" for February initiates the comparison silently before the run opens.</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     SCREEN 5 — STORY 2: COMPARISON MODAL (INFORMATIONAL)
+     ════════════════════════════════════════════════════════ -->
+<div class="screen" id="screen5">
+  <div class="page">
+
+    <div class="step-indicator">
+      <div class="step-num">5</div>
+      Story 2 — February payroll initiated. System detected January was processed with an unlocked rota. Comparison ran automatically: 8 differences found and already applied. Modal is informational only — the run has already been recalculated.
+    </div>
+
+    <div style="opacity:0.25;pointer-events:none;margin-bottom:8px;">
+      <div class="org-header"><div class="org-header-top"><div style="display:flex;align-items:center;gap:14px;"><div class="org-avatar">AG</div><div><div class="org-name">The Anchor Group</div></div></div></div></div>
+    </div>
+
+    <div class="overlay" style="position:absolute;top:0;left:0;right:0;bottom:0;">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <div>
+          <div class="modal-badge modal-badge-blue">Story 2 — Pay Run Comparison</div>
+          <div class="modal-title">Pay Element Adjustments Applied — January vs February</div>
+          <div class="modal-sub">8 adjustments automatically applied · February has been recalculated · Previous run (January) was processed with an unlocked rota</div>
+        </div>
+        <button class="modal-close" onclick="goToScreen(6)">✕</button>
+      </div>
+      <div class="modal-body">
+
+        <div class="banner banner-green">
+          <span>✓</span>
+          <span><strong>8 adjustments have been automatically applied to February and the run has been recalculated.</strong> The table below is for your review. These adjustments are treated as amendments and can be reversed through the standard amendment journey if needed.</span>
+        </div>
+
+        <!-- Summary totals — read only -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;background:#f8fafc;border-radius:8px;padding:12px;border:1px solid #d0e2e8;">
+          <div style="text-align:center;">
+            <div style="font-size:11px;color:#6b8a94;">Net adjustment applied</div>
+            <div style="font-size:18px;font-weight:800;color:#059669;">+£24.00</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:11px;color:#6b8a94;">Employees affected</div>
+            <div style="font-size:18px;font-weight:800;color:#1a2e35;">8</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:11px;color:#6b8a94;">February gross (revised)</div>
+            <div style="font-size:18px;font-weight:800;color:#1d8a9a;">£148,344.00</div>
+          </div>
+        </div>
+
+        <!-- Differences table — read only, no checkboxes -->
+        <table class="diff-table">
+          <thead>
+            <tr>
+              <th>Employee</th>
+              <th>Pay Element</th>
+              <th>January (prev)</th>
+              <th>February (new)</th>
+              <th>Adjustment applied</th>
+              <th>Type</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><div class="emp-cell"><div class="emp-av" style="background:#0891b2;">KH</div>Kevin Hart</div></td>
+              <td>Hourly Pay</td><td>£1,820.00</td><td>£2,184.00</td>
+              <td class="delta-pos">+£364.00</td>
+              <td><span class="pill pill-green" style="font-size:10px;">Addition</span></td>
+            </tr>
+            <tr>
+              <td><div class="emp-cell"><div class="emp-av" style="background:#7c3aed;">SW</div>Sarah Williams</div></td>
+              <td>Shift Allowance</td><td>£0.00</td><td>£150.00</td>
+              <td class="delta-pos">+£150.00</td>
+              <td><span class="pill pill-green" style="font-size:10px;">New element</span></td>
+            </tr>
+            <tr>
+              <td><div class="emp-cell"><div class="emp-av" style="background:#d97706;">TB</div>Tom Baker</div></td>
+              <td>Overtime</td><td>£420.00</td><td>£0.00</td>
+              <td class="delta-neg">−£420.00</td>
+              <td><span class="pill pill-red" style="font-size:10px;">Removed</span></td>
+            </tr>
+            <tr>
+              <td><div class="emp-cell"><div class="emp-av" style="background:#16a34a;">JD</div>James Davies</div></td>
+              <td>Hourly Pay</td><td>£1,560.00</td><td>£1,716.00</td>
+              <td class="delta-pos">+£156.00</td>
+              <td><span class="pill pill-green" style="font-size:10px;">Addition</span></td>
+            </tr>
+            <tr>
+              <td><div class="emp-cell"><div class="emp-av" style="background:#be185d;">EP</div>Emma Patel</div></td>
+              <td>Bonus</td><td>£500.00</td><td>£0.00</td>
+              <td class="delta-neg">−£500.00</td>
+              <td><span class="pill pill-red" style="font-size:10px;">Removed</span></td>
+            </tr>
+            <tr>
+              <td><div class="emp-cell"><div class="emp-av" style="background:#0d9488;">RN</div>Rachel Nguyen</div></td>
+              <td>Hourly Pay</td><td>£1,440.00</td><td>£1,584.00</td>
+              <td class="delta-pos">+£144.00</td>
+              <td><span class="pill pill-green" style="font-size:10px;">Addition</span></td>
+            </tr>
+            <tr>
+              <td><div class="emp-cell"><div class="emp-av" style="background:#7c3aed;">MO</div>Mohammed Omar</div></td>
+              <td>Night Premium</td><td>£0.00</td><td>£220.00</td>
+              <td class="delta-pos">+£220.00</td>
+              <td><span class="pill pill-green" style="font-size:10px;">New element</span></td>
+            </tr>
+            <tr>
+              <td><div class="emp-cell"><div class="emp-av" style="background:#b45309;">LC</div>Laura Chen</div></td>
+              <td>Shift Allowance</td><td>£180.00</td><td>£90.00</td>
+              <td class="delta-neg">−£90.00</td>
+              <td><span class="pill pill-amber" style="font-size:10px;">Changed</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="banner banner-blue">
+          <span>ℹ</span>
+          <span>To reverse any of these adjustments, use the standard amendment journey after dismissing this notice. All adjustments are recorded in the audit log against this run.</span>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-teal" onclick="goToScreen(6)">Acknowledged — proceed to approval →</button>
+      </div>
+    </div>
+    </div>
+
+    <div class="annotation" style="margin-top:520px;">
+      <div class="annotation-title">Screen 5 — Comparison modal notes (updated behaviour)</div>
+      <div class="annotation-grid">
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Fully automatic:</strong> All differences are applied and the run is recalculated before the operator sees this modal. There is no selection step.</span></div>
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Informational only:</strong> The table is read-only. The operator reviews what was applied but cannot change selections here — reversals go through the amendment journey.</span></div>
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Single action:</strong> One button — "Acknowledged — proceed to approval". No dismiss-without-applying path exists because application is already done.</span></div>
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Gross already revised:</strong> The revised February gross is shown in the summary — the operator knows the recalculated figure before they approve.</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     SCREEN 6 — PAYROLL RUN SUMMARY (EMPLOYEE LINE VIEW)
+     ════════════════════════════════════════════════════════ -->
+<div class="screen" id="screen6">
+  <div class="page">
+
+    <div class="step-indicator">
+      <div class="step-num">6</div>
+      February payroll run summary. Each affected employee shows their auto-applied adjustment as an amendment on their line. Click "View payslip →" on Kevin Hart to see payslip representation.
+    </div>
+
+    <!-- Run header -->
+    <div class="org-header">
+      <div class="org-header-top">
+        <div style="display:flex;align-items:center;gap:14px;">
+          <div class="org-avatar">AG</div>
+          <div>
+            <div class="org-name">February 2026 — Monthly Salaried</div>
+            <div class="org-meta">The Anchor Group · 62 employees · PAY-2026-FEB-001 · Pay date: 28 Feb 2026</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span class="pill pill-teal">⏳ Awaiting Approval</span>
+          <button class="btn btn-teal btn-sm" onclick="approveFeb()">Approve payroll ✓</button>
+        </div>
+      </div>
+      <div class="org-header-bar">
+        <div class="paye-kv">Gross: <strong>£148,344.00</strong></div>
+        <div class="paye-kv">PAYE: <strong>£29,668.80</strong></div>
+        <div class="paye-kv">Employee NI: <strong>£10,384.08</strong></div>
+        <div class="paye-kv">Employer NI: <strong>£22,251.60</strong></div>
+        <div class="paye-kv">Net pay: <strong>£108,291.12</strong></div>
+        <div style="margin-left:auto;">
+          <span class="pill pill-green" style="font-size:11px;">✓ 8 rota adjustments applied</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Amendment banner -->
+    <div class="banner banner-green" style="margin-bottom:14px;">
+      <span>✓</span>
+      <span><strong>8 rota adjustments have been automatically applied as amendments to this run.</strong> They appear on each employee's line below and are labelled "Adjustment — January 2026" on their payslip.</span>
+    </div>
+
+    <!-- Employee table -->
+    <div style="background:#fff;border:1px solid #d0e2e8;border-radius:12px;overflow:hidden;">
+      <div style="padding:12px 16px;background:#eef4f7;border-bottom:1px solid #d0e2e8;display:flex;justify-content:space-between;align-items:center;">
+        <div style="font-size:13px;font-weight:700;color:#1a2e35;">Employee Pay Summary</div>
+        <div style="font-size:11px;color:#6b8a94;">62 employees · Showing 6 for illustration</div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <thead>
+          <tr style="background:#f8fafc;">
+            <th style="text-align:left;padding:9px 14px;color:#6b8a94;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.4px;border-bottom:1px solid #d0e2e8;">Employee</th>
+            <th style="text-align:right;padding:9px 14px;color:#6b8a94;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.4px;border-bottom:1px solid #d0e2e8;">Basic Pay</th>
+            <th style="text-align:right;padding:9px 14px;color:#6b8a94;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.4px;border-bottom:1px solid #d0e2e8;">Other Elements</th>
+            <th style="text-align:right;padding:9px 14px;color:#6b8a94;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.4px;border-bottom:1px solid #d0e2e8;">Amendment</th>
+            <th style="text-align:right;padding:9px 14px;color:#6b8a94;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.4px;border-bottom:1px solid #d0e2e8;">Gross</th>
+            <th style="text-align:right;padding:9px 14px;color:#6b8a94;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.4px;border-bottom:1px solid #d0e2e8;">Net Pay</th>
+            <th style="padding:9px 14px;border-bottom:1px solid #d0e2e8;"></th>
+          </tr>
+        </thead>
+        <tbody>
+
+          <!-- Kevin Hart — has amendment -->
+          <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:10px 14px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:30px;height:30px;border-radius:50%;background:#0891b2;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;">KH</div>
+                <div>
+                  <div style="font-weight:700;color:#1a2e35;">Kevin Hart</div>
+                  <div style="font-size:11px;color:#6b8a94;">EMP-1042 · Hourly</div>
+                </div>
+              </div>
+            </td>
+            <td style="text-align:right;padding:10px 14px;color:#1a2e35;font-weight:600;">£2,184.00</td>
+            <td style="text-align:right;padding:10px 14px;color:#6b8a94;">—</td>
+            <td style="text-align:right;padding:10px 14px;">
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">
+                <span style="background:#d1fae5;color:#059669;border-radius:999px;padding:2px 8px;font-size:10px;font-weight:700;">+£364.00</span>
+                <span style="font-size:10px;color:#6b8a94;">Adj — Jan 2026</span>
+              </div>
+            </td>
+            <td style="text-align:right;padding:10px 14px;font-weight:800;color:#1a2e35;">£2,548.00</td>
+            <td style="text-align:right;padding:10px 14px;font-weight:700;color:#059669;">£2,061.47</td>
+            <td style="padding:10px 14px;text-align:right;"><button class="btn btn-ghost btn-sm" onclick="goToScreen(7)">View payslip →</button></td>
+          </tr>
+
+          <!-- Sarah Williams — has amendment -->
+          <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:10px 14px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:30px;height:30px;border-radius:50%;background:#7c3aed;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;">SW</div>
+                <div>
+                  <div style="font-weight:700;color:#1a2e35;">Sarah Williams</div>
+                  <div style="font-size:11px;color:#6b8a94;">EMP-1043 · Salaried</div>
+                </div>
+              </div>
+            </td>
+            <td style="text-align:right;padding:10px 14px;color:#1a2e35;font-weight:600;">£2,800.00</td>
+            <td style="text-align:right;padding:10px 14px;color:#6b8a94;">—</td>
+            <td style="text-align:right;padding:10px 14px;">
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">
+                <span style="background:#d1fae5;color:#059669;border-radius:999px;padding:2px 8px;font-size:10px;font-weight:700;">+£150.00</span>
+                <span style="font-size:10px;color:#6b8a94;">Adj — Jan 2026</span>
+              </div>
+            </td>
+            <td style="text-align:right;padding:10px 14px;font-weight:800;color:#1a2e35;">£2,950.00</td>
+            <td style="text-align:right;padding:10px 14px;font-weight:700;color:#059669;">£2,347.20</td>
+            <td style="padding:10px 14px;text-align:right;"><button class="btn btn-ghost btn-sm">View payslip →</button></td>
+          </tr>
+
+          <!-- Tom Baker — negative amendment -->
+          <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:10px 14px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:30px;height:30px;border-radius:50%;background:#d97706;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;">TB</div>
+                <div>
+                  <div style="font-weight:700;color:#1a2e35;">Tom Baker</div>
+                  <div style="font-size:11px;color:#6b8a94;">EMP-1044 · Hourly</div>
+                </div>
+              </div>
+            </td>
+            <td style="text-align:right;padding:10px 14px;color:#1a2e35;font-weight:600;">£1,960.00</td>
+            <td style="text-align:right;padding:10px 14px;color:#6b8a94;">—</td>
+            <td style="text-align:right;padding:10px 14px;">
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">
+                <span style="background:#fee2e2;color:#dc2626;border-radius:999px;padding:2px 8px;font-size:10px;font-weight:700;">−£420.00</span>
+                <span style="font-size:10px;color:#6b8a94;">Adj — Jan 2026</span>
+              </div>
+            </td>
+            <td style="text-align:right;padding:10px 14px;font-weight:800;color:#1a2e35;">£1,540.00</td>
+            <td style="text-align:right;padding:10px 14px;font-weight:700;color:#059669;">£1,268.80</td>
+            <td style="padding:10px 14px;text-align:right;"><button class="btn btn-ghost btn-sm">View payslip →</button></td>
+          </tr>
+
+          <!-- James Davies — has amendment -->
+          <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:10px 14px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:30px;height:30px;border-radius:50%;background:#16a34a;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;">JD</div>
+                <div>
+                  <div style="font-weight:700;color:#1a2e35;">James Davies</div>
+                  <div style="font-size:11px;color:#6b8a94;">EMP-1045 · Hourly</div>
+                </div>
+              </div>
+            </td>
+            <td style="text-align:right;padding:10px 14px;color:#1a2e35;font-weight:600;">£1,716.00</td>
+            <td style="text-align:right;padding:10px 14px;color:#6b8a94;">—</td>
+            <td style="text-align:right;padding:10px 14px;">
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">
+                <span style="background:#d1fae5;color:#059669;border-radius:999px;padding:2px 8px;font-size:10px;font-weight:700;">+£156.00</span>
+                <span style="font-size:10px;color:#6b8a94;">Adj — Jan 2026</span>
+              </div>
+            </td>
+            <td style="text-align:right;padding:10px 14px;font-weight:800;color:#1a2e35;">£1,872.00</td>
+            <td style="text-align:right;padding:10px 14px;font-weight:700;color:#059669;">£1,521.60</td>
+            <td style="padding:10px 14px;text-align:right;"><button class="btn btn-ghost btn-sm">View payslip →</button></td>
+          </tr>
+
+          <!-- Anna Clarke — no amendment, standard employee -->
+          <tr style="border-bottom:1px solid #f1f5f9;background:#fafcfd;">
+            <td style="padding:10px 14px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:30px;height:30px;border-radius:50%;background:#6b8a94;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;">AC</div>
+                <div>
+                  <div style="font-weight:700;color:#1a2e35;">Anna Clarke</div>
+                  <div style="font-size:11px;color:#6b8a94;">EMP-1046 · Salaried</div>
+                </div>
+              </div>
+            </td>
+            <td style="text-align:right;padding:10px 14px;color:#1a2e35;font-weight:600;">£3,200.00</td>
+            <td style="text-align:right;padding:10px 14px;color:#6b8a94;">—</td>
+            <td style="text-align:right;padding:10px 14px;color:#d0e2e8;font-size:11px;">—</td>
+            <td style="text-align:right;padding:10px 14px;font-weight:800;color:#1a2e35;">£3,200.00</td>
+            <td style="text-align:right;padding:10px 14px;font-weight:700;color:#059669;">£2,547.20</td>
+            <td style="padding:10px 14px;text-align:right;"><button class="btn btn-ghost btn-sm">View payslip →</button></td>
+          </tr>
+
+          <!-- Emma Patel — negative amendment -->
+          <tr style="background:#fafcfd;">
+            <td style="padding:10px 14px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:30px;height:30px;border-radius:50%;background:#be185d;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;">EP</div>
+                <div>
+                  <div style="font-weight:700;color:#1a2e35;">Emma Patel</div>
+                  <div style="font-size:11px;color:#6b8a94;">EMP-1047 · Salaried</div>
+                </div>
+              </div>
+            </td>
+            <td style="text-align:right;padding:10px 14px;color:#1a2e35;font-weight:600;">£2,600.00</td>
+            <td style="text-align:right;padding:10px 14px;color:#6b8a94;">—</td>
+            <td style="text-align:right;padding:10px 14px;">
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">
+                <span style="background:#fee2e2;color:#dc2626;border-radius:999px;padding:2px 8px;font-size:10px;font-weight:700;">−£500.00</span>
+                <span style="font-size:10px;color:#6b8a94;">Adj — Jan 2026</span>
+              </div>
+            </td>
+            <td style="text-align:right;padding:10px 14px;font-weight:800;color:#1a2e35;">£2,100.00</td>
+            <td style="text-align:right;padding:10px 14px;font-weight:700;color:#059669;">£1,718.40</td>
+            <td style="padding:10px 14px;text-align:right;"><button class="btn btn-ghost btn-sm">View payslip →</button></td>
+          </tr>
+
+        </tbody>
+      </table>
+      <div style="padding:10px 14px;background:#f8fafc;border-top:1px solid #d0e2e8;font-size:11px;color:#6b8a94;text-align:center;">
+        Showing 6 of 62 employees · 8 employees have rota adjustment amendments this period
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end;">
+      <button class="btn btn-outline" onclick="goToScreen(1)">↩ Reset journey</button>
+    </div>
+
+    <div class="annotation">
+      <div class="annotation-title">Screen 6 — Payroll summary notes</div>
+      <div class="annotation-grid">
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Amendment column:</strong> Only employees with a rota adjustment show a value in the Amendment column. Unaffected employees (e.g. Anna Clarke) show a dash — no visual noise for unaffected rows.</span></div>
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Label on the row:</strong> "Adj — Jan 2026" beneath the amount immediately communicates which period the adjustment relates to without opening the payslip.</span></div>
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Positive &amp; negative:</strong> Green pill for additions, red pill for removals/reductions — mirrors the comparison modal colour language.</span></div>
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Gross reflects adjustment:</strong> The gross column is the sum of basic pay, other elements, and the amendment — Kevin Hart's £2,184 + £364 = £2,548 gross.</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     SCREEN 7 — PAYSLIP VIEW (KEVIN HART)
+     ════════════════════════════════════════════════════════ -->
+<div class="screen" id="screen7">
+  <div class="page">
+
+    <div class="step-indicator">
+      <div class="step-num">7</div>
+      Kevin Hart's February 2026 payslip. The rota adjustment appears as a distinct pay element labelled "Adjustment — January 2026".
+    </div>
+
+    <div style="max-width:580px;margin:0 auto;">
+
+      <!-- Payslip card -->
+      <div style="background:#fff;border:1px solid #d0e2e8;border-radius:12px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.06);">
+
+        <!-- Payslip header -->
+        <div style="background:#0d3d4f;padding:20px 24px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div>
+              <div style="color:#94c5cf;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Payslip</div>
+              <div style="color:#fff;font-size:18px;font-weight:800;margin-top:4px;">Kevin Hart</div>
+              <div style="color:#94c5cf;font-size:12px;margin-top:2px;">EMP-1042 · Hourly · The Anchor Group</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="color:#94c5cf;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Pay Period</div>
+              <div style="color:#fff;font-size:14px;font-weight:700;margin-top:4px;">February 2026</div>
+              <div style="color:#94c5cf;font-size:11px;margin-top:2px;">Pay date: 28 Feb 2026</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Employer info bar -->
+        <div style="background:#eef4f7;padding:10px 24px;border-bottom:1px solid #d0e2e8;display:flex;gap:24px;flex-wrap:wrap;">
+          <div style="font-size:11px;color:#6b8a94;">PAYE Ref: <strong style="color:#1a2e35;font-family:monospace;">120/A12345</strong></div>
+          <div style="font-size:11px;color:#6b8a94;">NI Number: <strong style="color:#1a2e35;font-family:monospace;">AB 12 34 56 C</strong></div>
+          <div style="font-size:11px;color:#6b8a94;">Tax Code: <strong style="color:#1a2e35;">1257L</strong></div>
+          <div style="font-size:11px;color:#6b8a94;">NI Category: <strong style="color:#1a2e35;">A</strong></div>
+        </div>
+
+        <div style="padding:20px 24px;display:flex;flex-direction:column;gap:0;">
+
+          <!-- Payments section -->
+          <div style="font-size:11px;font-weight:700;color:#6b8a94;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Payments</div>
+
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;">
+            <span style="font-size:13px;color:#1a2e35;">Hourly Pay</span>
+            <span style="font-size:13px;font-weight:600;color:#1a2e35;">£2,184.00</span>
+          </div>
+
+          <!-- ADJUSTMENT PAY ELEMENT — the new element -->
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid #f1f5f9;background:#f0fdf4;border-left:3px solid #059669;margin:0 -12px;padding-left:12px;">
+            <div>
+              <div style="font-size:13px;font-weight:700;color:#059669;">Adjustment — January 2026</div>
+              <div style="font-size:11px;color:#6b8a94;margin-top:2px;">Rota correction · Applied automatically from previous pay run comparison</div>
+            </div>
+            <span style="font-size:13px;font-weight:700;color:#059669;">+£364.00</span>
+          </div>
+
+          <!-- Gross total -->
+          <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:2px solid #d0e2e8;margin-top:4px;">
+            <span style="font-size:14px;font-weight:800;color:#1a2e35;">Gross Pay</span>
+            <span style="font-size:14px;font-weight:800;color:#1a2e35;">£2,548.00</span>
+          </div>
+
+          <!-- Deductions section -->
+          <div style="font-size:11px;font-weight:700;color:#6b8a94;text-transform:uppercase;letter-spacing:0.5px;margin-top:14px;margin-bottom:8px;">Deductions</div>
+
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;">
+            <span style="font-size:13px;color:#1a2e35;">Income Tax (PAYE)</span>
+            <span style="font-size:13px;font-weight:600;color:#dc2626;">−£350.40</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;">
+            <span style="font-size:13px;color:#1a2e35;">Employee National Insurance</span>
+            <span style="font-size:13px;font-weight:600;color:#dc2626;">−£136.13</span>
+          </div>
+
+          <!-- Net pay -->
+          <div style="background:#0d3d4f;border-radius:8px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;margin-top:14px;">
+            <span style="color:#94c5cf;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Net Pay</span>
+            <span style="color:#fff;font-size:22px;font-weight:800;">£2,061.47</span>
+          </div>
+
+          <!-- Employer section -->
+          <div style="font-size:11px;font-weight:700;color:#6b8a94;text-transform:uppercase;letter-spacing:0.5px;margin-top:18px;margin-bottom:8px;">Employer Contributions (not deducted from pay)</div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;">
+            <span style="font-size:13px;color:#6b8a94;">Employer National Insurance</span>
+            <span style="font-size:13px;color:#6b8a94;">£382.20</span>
+          </div>
+
+          <!-- YTD -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px;">
+            <div style="background:#eef4f7;border-radius:8px;padding:10px 14px;">
+              <div style="font-size:10px;color:#6b8a94;font-weight:700;text-transform:uppercase;">YTD Gross</div>
+              <div style="font-size:16px;font-weight:800;color:#1a2e35;margin-top:2px;">£4,732.00</div>
+            </div>
+            <div style="background:#eef4f7;border-radius:8px;padding:10px 14px;">
+              <div style="font-size:10px;color:#6b8a94;font-weight:700;text-transform:uppercase;">YTD Tax Paid</div>
+              <div style="font-size:16px;font-weight:800;color:#1a2e35;margin-top:2px;">£654.40</div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Payslip footer -->
+        <div style="padding:12px 24px;background:#f8fafc;border-top:1px solid #d0e2e8;font-size:11px;color:#6b8a94;text-align:center;">
+          This payslip is generated by S4Pay · PAY-2026-FEB-001 · The Anchor Group
+        </div>
+
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:16px;justify-content:space-between;">
+        <button class="btn btn-outline" onclick="goToScreen(6)">← Back to run summary</button>
+        <button class="btn btn-outline" onclick="goToScreen(1)">↩ Reset journey</button>
+      </div>
+
+    </div>
+
+    <div class="annotation" style="max-width:580px;margin:20px auto 0;">
+      <div class="annotation-title">Screen 7 — Payslip notes</div>
+      <div class="annotation-grid">
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Distinct pay element:</strong> "Adjustment — January 2026" is a named, standalone pay element — not hidden inside another line or added to basic pay silently.</span></div>
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Period labelling:</strong> The month name in the label ("January 2026") tells the employee exactly which period the correction relates to.</span></div>
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Sub-description:</strong> A second line beneath the element name explains the source — "Rota correction · Applied automatically from previous pay run comparison" — for both operator and employee clarity.</span></div>
+        <div class="annotation-item"><span class="annotation-dot">·</span><span><strong>Negative adjustments:</strong> Tom Baker's −£420.00 would appear identically structured but in red, labelled "Adjustment — January 2026" with a minus sign, included in gross and reflected in reduced net pay.</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let acknowledged = false;
+
+  function goToScreen(n) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen' + n).classList.add('active');
+
+    const steps = ['js1','js2','js3','js4','js5','js6','js7'];
+    steps.forEach((id, i) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.className = 'journey-step';
+      el.style.background = '';
+      el.style.color = '';
+      if (i + 1 < n) { el.classList.add('step-done'); el.style.background = '#d1fae5'; el.style.color = '#059669'; }
+      else if (i + 1 === n) { el.classList.add('step-active'); }
+      else { el.classList.add('step-idle'); }
+    });
+
+    window.scrollTo(0, 0);
+  }
+
+  function toggleAck() {
+    acknowledged = !acknowledged;
+    const box = document.getElementById('ackBox');
+    const check = document.getElementById('ackCheck');
+    const btn = document.getElementById('proceedBtn');
+    if (acknowledged) {
+      box.classList.add('checked'); check.textContent = '✓';
+      btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer';
+    } else {
+      box.classList.remove('checked'); check.textContent = '';
+      btn.disabled = true; btn.style.opacity = '0.4'; btn.style.cursor = 'not-allowed';
+    }
+  }
+
+  function approveFeb() {
+    const status = document.querySelector('#screen6 .pill-teal');
+    if (status) { status.textContent = '✓ Approved'; status.className = 'pill pill-green'; }
+    const btn = document.querySelector('#screen6 .btn-teal.btn-sm');
+    if (btn) { btn.textContent = '✓ Approved'; btn.disabled = true; btn.style.opacity = '0.5'; }
+  }
+</script>
+</body>
+</html>
